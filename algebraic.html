@@ -1,0 +1,736 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Poiseuille's Law — Algebraic</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet"/>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --sky:#e0f4ff; --sky-light:#f0f9ff; --sky-mid:#b3dff5;
+    --sky-deep:#5ab8e8; --sky-dark:#1a7db5; --sky-darkest:#0d5480;
+    --white:#ffffff; --text-main:#0d3d5c; --text-muted:#3a7096; --tab-bg:#cceaf8;
+  }
+  html, body { height:100%; overflow:hidden; }
+  body { font-family:'Nunito',sans-serif; background:var(--sky-light); color:var(--text-main); display:flex; flex-direction:column; }
+
+  /* ── NAV (reality style) ── */
+  .nav-wrap {
+    background: var(--sky);
+    border-bottom: 2.5px solid var(--sky-deep);
+    padding: 10px 24px;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+  }
+
+  .nav-btn {
+    background: var(--sky-dark);
+    color: var(--white);
+    border: none;
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    transition: background 0.2s;
+    flex-shrink: 0;
+  }
+  .nav-btn:hover { background: var(--sky-darkest); }
+
+  .nav-tabs {
+    display: flex;
+    align-items: flex-end;
+    gap: 60px;
+    list-style: none;
+    margin: 0 auto;
+  }
+  .nav-tabs a { text-decoration: none; color: inherit; }
+
+  .nav-tab {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 0;
+    border-radius: 12px 12px 0 0;
+    cursor: pointer;
+    background: var(--tab-bg);
+    border: 1.5px solid var(--sky-mid);
+    border-bottom: none;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text-muted);
+    min-width: 160px;
+    transition: background 0.2s, color 0.2s;
+    user-select: none;
+    overflow: hidden;
+  }
+  .nav-tab:hover { background: var(--sky-mid); }
+  .nav-tab.active {
+    background: var(--white);
+    border-color: var(--sky-deep);
+    border-bottom: 2.5px solid var(--white);
+    color: var(--sky-darkest);
+    margin-bottom: -2.5px;
+    z-index: 2;
+  }
+
+  .tab-img-container {
+    width: 100%;
+    height: 100px;
+    background: #d1d5db;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-bottom: 1px solid var(--sky-mid);
+  }
+  .tab-img-container img {
+    width: 100%; height: 100%;
+    object-fit: cover; display: block;
+  }
+  .tab-label {
+    padding: 12px 10px;
+    text-align: center;
+    width: 100%;
+  }
+
+  /* ── PAGE SHELL ── */
+  .page-shell { flex:1; position:relative; overflow:hidden; min-height:0; }
+
+  .pg {
+    position:absolute; inset:0;
+    display:grid; grid-template-columns:40% 60%;
+    gap:24px; padding:14px 24px 12px;
+    opacity:0; pointer-events:none;
+    transition:opacity 0.35s;
+  }
+  .pg.visible { opacity:1; pointer-events:all; }
+
+  /* LEFT */
+  .left-panel { display:flex; flex-direction:column; gap:8px; min-height:0; }
+  .left-panel h2 { font-family:'Playfair Display',serif; font-size:21px; font-weight:700; color:var(--sky-darkest); border-left:5px solid var(--sky-deep); padding-left:12px; flex-shrink:0; }
+  .steps-container { display:flex; flex-direction:column; gap:7px; flex:1; min-height:0; }
+
+  .step-card {
+    background:var(--white); border:1.5px solid var(--sky-mid); border-left:5px solid var(--sky-mid);
+    border-radius:0 10px 10px 0; padding:9px 14px; cursor:pointer;
+    transition:all 0.22s; flex:1; display:flex; flex-direction:column; justify-content:center; gap:3px; min-height:0;
+  }
+  .step-card:hover { border-left-color:var(--sky-deep); box-shadow:0 2px 10px rgba(90,184,232,0.15); }
+  .step-card.active { border-left-color:var(--sky-darkest); background:var(--sky); box-shadow:0 3px 14px rgba(13,84,128,0.12); }
+  .step-num { font-size:10px; font-weight:800; text-transform:uppercase; letter-spacing:0.08em; color:var(--sky-dark); }
+  .step-card.active .step-num { color:var(--sky-darkest); }
+  .math-display {
+    font-size:19px; font-family:'Georgia','Times New Roman',serif;
+    color:var(--sky-darkest); line-height:1.55; text-align:center; padding:3px 0;
+  }
+  .math-display .frac { display:inline-flex; flex-direction:column; align-items:center; vertical-align:middle; font-size:0.8em; margin:0 2px; }
+  .math-display .frac .num { border-bottom:1.5px solid currentColor; padding:0 3px; }
+  .math-display .frac .den { padding:0 3px; }
+
+  /* RIGHT */
+  .right-panel { display:flex; flex-direction:column; gap:8px; min-height:0; }
+  .canvas-wrap { border-radius:14px; overflow:hidden; border:2px solid var(--sky-mid); background:#071828; flex:1; min-height:0; position:relative; }
+  canvas { width:100%; height:100%; display:block; }
+  .fig-label { position:absolute; bottom:8px; left:50%; transform:translateX(-50%); background:rgba(13,84,128,0.78); color:#e0f4ff; font-size:12px; font-weight:700; padding:4px 14px; border-radius:20px; pointer-events:none; white-space:nowrap; }
+
+  /* PAGE NAV ARROWS */
+  .page-nav {
+    position:absolute; right:6px; top:50%; transform:translateY(-50%);
+    display:flex; flex-direction:column; gap:10px; z-index:10;
+  }
+  .nav-arr {
+    width:38px; height:38px; border-radius:50%;
+    background:var(--sky-darkest); color:var(--white);
+    border:2px solid var(--sky-mid);
+    font-size:18px; cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+    box-shadow:0 3px 10px rgba(13,84,128,0.35);
+    transition:background 0.2s;
+    user-select:none;
+  }
+  .nav-arr:hover { background:var(--sky-dark); }
+  .nav-arr.hidden { opacity:0; pointer-events:none; }
+
+  .page-dots { position:absolute; bottom:6px; right:14px; display:flex; gap:6px; z-index:10; }
+  .dot { width:8px; height:8px; border-radius:50%; background:var(--sky-mid); transition:background 0.2s; }
+  .dot.active { background:var(--sky-darkest); }
+</style>
+</head>
+<body>
+
+<!-- ── NAV (reality page style) ── -->
+<div class="nav-wrap">
+  <button class="nav-btn" onclick="location.href='geometric.html'">&#9664;</button>
+
+  <ul class="nav-tabs">
+    <a href="reality.html">
+      <li class="nav-tab">
+        <div class="tab-img-container">
+          <img src="reality.jpg" alt="Reality" onerror="this.style.display='none'">
+        </div>
+        <div class="tab-label">Reality</div>
+      </li>
+    </a>
+    <a href="idealization.html">
+      <li class="nav-tab">
+        <div class="tab-img-container">
+          <img src="idealization.jpg.png" alt="Idealization" onerror="this.style.display='none'">
+        </div>
+        <div class="tab-label">Idealization</div>
+      </li>
+    </a>
+    <a href="discretization.html">
+      <li class="nav-tab">
+        <div class="tab-img-container">
+          <img src="discretization.png.jpeg" alt="Discretization" onerror="this.style.display='none'">
+        </div>
+        <div class="tab-label">Discretization</div>
+      </li>
+    </a>
+    <a href="geometric.html">
+      <li class="nav-tab">
+        <div class="tab-img-container">
+          <img src="geometry.jpg.png" alt="Geometric" onerror="this.style.display='none'">
+        </div>
+        <div class="tab-label">Geometric</div>
+      </li>
+    </a>
+    <a href="algebraic.html">
+      <li class="nav-tab active">
+        <div class="tab-img-container">
+          <img src="algebraic.png.jpeg" alt="Algebraic" onerror="this.style.display='none'">
+        </div>
+        <div class="tab-label">Algebraic</div>
+      </li>
+    </a>
+  </ul>
+
+  <button class="nav-btn" onclick="window.history.forward()">&#9654;</button>
+</div>
+
+<!-- ── PAGE SHELL ── -->
+<div class="page-shell">
+
+  <!-- PAGE 1 -->
+  <div class="pg visible" id="pg0">
+    <section class="left-panel">
+      <h2>Algebraic Derivation <span style="font-size:14px;color:var(--sky-dark);">— Page 1 / 3</span></h2>
+      <div class="steps-container">
+
+        <div class="step-card active" data-pg="0" data-step="0" onclick="setStep(0,0)">
+          <div class="step-num">Step 1 — Newton's viscosity law</div>
+          <div class="math-display">
+            &tau; = &mu; <span class="frac"><span class="num">du</span><span class="den">dr</span></span>
+          </div>
+        </div>
+
+        <div class="step-card" data-pg="0" data-step="1" onclick="setStep(0,1)">
+          <div class="step-num">Step 2 — Substitute &tau; = &Delta;pr / 2L</div>
+          <div class="math-display">
+            &mu; <span class="frac"><span class="num">du</span><span class="den">dr</span></span>
+            = <span class="frac"><span class="num">&Delta;p &middot; r</span><span class="den">2L</span></span>
+          </div>
+        </div>
+
+        <div class="step-card" data-pg="0" data-step="2" onclick="setStep(0,2)">
+          <div class="step-num">Step 3 — Rearrange for du</div>
+          <div class="math-display">
+            du = <span class="frac"><span class="num">&Delta;p</span><span class="den">2&mu;L</span></span> r &thinsp;dr
+          </div>
+        </div>
+
+        <div class="step-card" data-pg="0" data-step="3" onclick="setStep(0,3)">
+          <div class="step-num">Step 4 — Integrate both sides</div>
+          <div class="math-display">
+            &int; du = <span class="frac"><span class="num">&Delta;p</span><span class="den">2&mu;L</span></span>
+            &int; r &thinsp;dr
+          </div>
+        </div>
+
+        <div class="step-card" data-pg="0" data-step="4" onclick="setStep(0,4)">
+          <div class="step-num">Step 5 — After integration</div>
+          <div class="math-display">
+            u = <span class="frac"><span class="num">&Delta;p</span><span class="den">4&mu;L</span></span>
+            r<sup>2</sup> + C<sub>1</sub>
+          </div>
+        </div>
+
+      </div>
+    </section>
+    <section class="right-panel">
+      <div class="canvas-wrap">
+        <canvas id="c0"></canvas>
+        <div class="fig-label" id="fl0">Viscous fluid flow in a pipe</div>
+      </div>
+    </section>
+  </div>
+
+  <!-- PAGE 2 -->
+  <div class="pg" id="pg1">
+    <section class="left-panel">
+      <h2>Algebraic Derivation <span style="font-size:14px;color:var(--sky-dark);">— Page 2 / 3</span></h2>
+      <div class="steps-container">
+
+        <div class="step-card active" data-pg="1" data-step="0" onclick="setStep(1,0)">
+          <div class="step-num">Step 6 — Boundary condition: u = 0 at r = R</div>
+          <div class="math-display">
+            0 = <span class="frac"><span class="num">&Delta;p</span><span class="den">4&mu;L</span></span>
+            R<sup>2</sup> + C<sub>1</sub>
+            &nbsp;&rArr;&nbsp;
+            C<sub>1</sub> = &minus;<span class="frac"><span class="num">&Delta;p R<sup>2</sup></span><span class="den">4&mu;L</span></span>
+          </div>
+        </div>
+
+        <div class="step-card" data-pg="1" data-step="1" onclick="setStep(1,1)">
+          <div class="step-num">Step 7 — Velocity profile</div>
+          <div class="math-display">
+            u(r) = <span class="frac"><span class="num">&Delta;p</span><span class="den">4&mu;L</span></span>
+            (R<sup>2</sup> &minus; r<sup>2</sup>)
+          </div>
+        </div>
+
+        <div class="step-card" data-pg="1" data-step="2" onclick="setStep(1,2)">
+          <div class="step-num">Step 8 — Flow through thin shell dA = 2&pi;r dr</div>
+          <div class="math-display">
+            dQ = u(r) &middot; 2&pi;r &thinsp;dr
+          </div>
+        </div>
+
+        <div class="step-card" data-pg="1" data-step="3" onclick="setStep(1,3)">
+          <div class="step-num">Step 9 — Substitute u(r)</div>
+          <div class="math-display">
+            dQ = <span class="frac"><span class="num">&pi;&Delta;p</span><span class="den">2&mu;L</span></span>
+            (R<sup>2</sup> &minus; r<sup>2</sup>) r &thinsp;dr
+          </div>
+        </div>
+
+        <div class="step-card" data-pg="1" data-step="4" onclick="setStep(1,4)">
+          <div class="step-num">Step 10 — Integrate from 0 to R</div>
+          <div class="math-display">
+            Q = <span class="frac"><span class="num">&pi;&Delta;p</span><span class="den">2&mu;L</span></span>
+            &int;<sub>0</sub><sup>R</sup>
+            (R<sup>2</sup>r &minus; r<sup>3</sup>) dr
+          </div>
+        </div>
+
+      </div>
+    </section>
+    <section class="right-panel">
+      <div class="canvas-wrap">
+        <canvas id="c1"></canvas>
+        <div class="fig-label" id="fl1">Velocity profile &amp; concentric shells</div>
+      </div>
+    </section>
+  </div>
+
+  <!-- PAGE 3 -->
+  <div class="pg" id="pg2">
+    <section class="left-panel">
+      <h2>Algebraic Derivation <span style="font-size:14px;color:var(--sky-dark);">— Page 3 / 3</span></h2>
+      <div class="steps-container">
+
+        <div class="step-card active" data-pg="2" data-step="0" onclick="setStep(2,0)">
+          <div class="step-num">Step 11 — Evaluate integral</div>
+          <div class="math-display">
+            Q = <span class="frac"><span class="num">&pi;&Delta;p</span><span class="den">2&mu;L</span></span>
+            &middot;
+            <span class="frac"><span class="num">D<sup>4</sup></span><span class="den">64</span></span>
+          </div>
+        </div>
+
+        <div class="step-card" data-pg="2" data-step="1" onclick="setStep(2,1)">
+          <div class="step-num">Step 12 — Poiseuille's Law ✓</div>
+          <div class="math-display" style="font-size:22px;">
+            Q = <span class="frac"><span class="num">&pi;D<sup>4</sup>&Delta;p</span><span class="den">128&mu;L</span></span>
+          </div>
+        </div>
+
+      </div>
+    </section>
+    <section class="right-panel">
+      <div class="canvas-wrap">
+        <canvas id="c2"></canvas>
+        <div class="fig-label" id="fl2">Poiseuille's Law — Q = πD⁴Δp / 128μL</div>
+      </div>
+    </section>
+  </div>
+
+  <!-- PAGE NAV ARROWS -->
+  <div class="page-nav">
+    <button class="nav-arr hidden" id="btnUp" onclick="changePage(-1)">&#8679;</button>
+    <button class="nav-arr" id="btnDown" onclick="changePage(1)">&#8681;</button>
+  </div>
+
+  <!-- DOTS -->
+  <div class="page-dots">
+    <div class="dot active" id="dot0"></div>
+    <div class="dot" id="dot1"></div>
+    <div class="dot" id="dot2"></div>
+  </div>
+
+</div>
+
+<script>
+let curPage = 0;
+let curStep = [0, 0, 0];
+let animT = 0, lastTime = 0;
+const TOTAL_PAGES = 3;
+
+const canvases = [
+  document.getElementById('c0'),
+  document.getElementById('c1'),
+  document.getElementById('c2')
+];
+const figLabels = [
+  document.getElementById('fl0'),
+  document.getElementById('fl1'),
+  document.getElementById('fl2')
+];
+
+function resize() {
+  canvases.forEach(c => {
+    if (c && c.parentElement) {
+      c.width = c.parentElement.clientWidth;
+      c.height = c.parentElement.clientHeight;
+    }
+  });
+}
+
+function changePage(dir) {
+  const next = curPage + dir;
+  if (next < 0 || next >= TOTAL_PAGES) return;
+  document.getElementById('pg' + curPage).classList.remove('visible');
+  curPage = next;
+  document.getElementById('pg' + curPage).classList.add('visible');
+  animT = 0;
+  updateNav();
+}
+
+function updateNav() {
+  document.getElementById('btnUp').classList.toggle('hidden', curPage === 0);
+  document.getElementById('btnDown').classList.toggle('hidden', curPage === TOTAL_PAGES - 1);
+  for (let i = 0; i < TOTAL_PAGES; i++)
+    document.getElementById('dot' + i).classList.toggle('active', i === curPage);
+}
+
+function setStep(pg, step) {
+  curStep[pg] = step;
+  animT = 0;
+  document.querySelectorAll(`.pg#pg${pg} .step-card`)
+    .forEach((c, j) => c.classList.toggle('active', j === step));
+}
+
+function lerp(a, b, t) { return a + (b - a) * t; }
+function easeOut(t) { return 1 - (1 - t) * (1 - t); }
+function getCtx(pg) { return canvases[pg].getContext('2d'); }
+
+function bgDark(ctx, W, H) {
+  const g = ctx.createLinearGradient(0, 0, 0, H);
+  g.addColorStop(0, '#071828'); g.addColorStop(1, '#0d2a42');
+  ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+}
+
+function arrowLine(ctx, x1, y1, x2, y2, color, lw=2) {
+  ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2);
+  ctx.strokeStyle = color; ctx.lineWidth = lw; ctx.stroke();
+  const ang = Math.atan2(y2 - y1, x2 - x1), s = 7;
+  ctx.beginPath();
+  ctx.moveTo(x2, y2);
+  ctx.lineTo(x2 - s * Math.cos(ang - 0.4), y2 - s * Math.sin(ang - 0.4));
+  ctx.lineTo(x2 - s * Math.cos(ang + 0.4), y2 - s * Math.sin(ang + 0.4));
+  ctx.closePath(); ctx.fillStyle = color; ctx.fill();
+}
+
+const p0FigLabels = [
+  'Shear stress τ acts on fluid layers',
+  'Substituting τ = Δpr/2L into viscosity law',
+  'Rearranging: du = (Δp/2μL) r dr',
+  'Integrating both sides over r',
+  'Result: u = (Δp/4μL)r² + C₁'
+];
+
+function drawPage0(t) {
+  const ctx = getCtx(0);
+  const W = canvases[0].width, H = canvases[0].height;
+  bgDark(ctx, W, H);
+  const step = curStep[0];
+  const e = easeOut(Math.min(1, t * 1.6));
+  const cx = W * 0.5, cy = H * 0.5;
+  const R = H * 0.28, len = W * 0.62;
+
+  ctx.beginPath();
+  ctx.moveTo(cx - len/2, cy - R); ctx.lineTo(cx + len/2, cy - R);
+  ctx.moveTo(cx - len/2, cy + R); ctx.lineTo(cx + len/2, cy + R);
+  ctx.strokeStyle = 'rgba(90,184,232,0.7)'; ctx.lineWidth = 2.5; ctx.stroke();
+
+  [[cx-len/2],[cx+len/2]].forEach(([x]) => {
+    ctx.beginPath(); ctx.ellipse(x, cy, len*0.04, R, 0, 0, Math.PI*2);
+    ctx.strokeStyle='rgba(90,184,232,0.5)'; ctx.lineWidth=2; ctx.stroke();
+    ctx.fillStyle='rgba(13,84,128,0.2)'; ctx.fill();
+  });
+
+  const N = 14;
+  for (let i = N; i >= 1; i--) {
+    const ri = (i/N)*R, ri2 = ((i-1)/N)*R;
+    const vel = 1 - Math.pow((i-0.5)/N, 2);
+    const hue = lerp(200, 20, 1 - vel);
+    ctx.beginPath(); ctx.rect(cx - len/2, cy - ri, len, ri - ri2);
+    ctx.fillStyle = `hsla(${hue},75%,50%,0.45)`; ctx.fill();
+    ctx.beginPath(); ctx.rect(cx - len/2, cy + ri2, len, ri - ri2);
+    ctx.fillStyle = `hsla(${hue},75%,50%,0.45)`; ctx.fill();
+  }
+
+  for (let i = 0; i < 9; i++) {
+    const frac = i / 8;
+    const y = cy - R + frac * 2 * R;
+    const rv = Math.abs(y - cy);
+    const vel = (1 - Math.pow(rv / R, 2)) * e;
+    const aLen = vel * len * 0.36;
+    const hue = lerp(200, 20, 1 - (1 - Math.pow(rv/R, 2)));
+    arrowLine(ctx, cx - len/2 + 14, y, cx - len/2 + 14 + aLen, y, `hsla(${hue},85%,65%,0.9)`, 1.8 + vel * 1.4);
+  }
+
+  if (step === 0) {
+    ctx.globalAlpha = e;
+    const shellR = R * 0.55;
+    for (let i = 0; i < 6; i++) {
+      const x = cx - len/2 + (i+0.5)/6 * len;
+      arrowLine(ctx, x, cy - shellR - 4, x - 18*e, cy - shellR - 4, '#d47010', 2);
+      arrowLine(ctx, x, cy + shellR + 4, x - 18*e, cy + shellR + 4, '#d47010', 2);
+    }
+    ctx.font = 'bold 13px Georgia,serif'; ctx.fillStyle = '#d47010'; ctx.textAlign = 'center';
+    ctx.fillText('τ = μ du/dr', cx, cy - R - 18);
+    ctx.globalAlpha = 1;
+  }
+
+  if (step >= 4) {
+    ctx.globalAlpha = e;
+    ctx.font = 'bold 13px Georgia,serif'; ctx.fillStyle = 'rgba(255,200,80,0.9)'; ctx.textAlign = 'right';
+    ctx.fillText('u = 0 at r = R  (no-slip)', cx + len/2 - 10, cy - R - 16);
+    ctx.globalAlpha = 1;
+  }
+
+  ctx.beginPath(); ctx.moveTo(cx - len/2 + 6, cy); ctx.lineTo(cx + len/2 - 6, cy);
+  ctx.setLineDash([6,5]); ctx.strokeStyle='rgba(255,255,255,0.18)'; ctx.lineWidth=1; ctx.stroke(); ctx.setLineDash([]);
+
+  ctx.globalAlpha = 0.6;
+  arrowLine(ctx, cx - len/2 + 10, cy - R - 26, cx + len/2 - 10, cy - R - 26, '#5ab8e8', 1.8);
+  ctx.font = '12px Nunito,sans-serif'; ctx.fillStyle = '#b3dff5'; ctx.textAlign = 'center';
+  ctx.fillText('flow  →', cx, cy - R - 32);
+  ctx.globalAlpha = 1;
+
+  figLabels[0].textContent = p0FigLabels[step] || p0FigLabels[0];
+}
+
+const p1FigLabels = [
+  'No-slip: u = 0 at wall r = R',
+  'Parabolic velocity profile u(r)',
+  'Thin shell contributes dQ = u(r)·2πr dr',
+  'Substituting u(r) into dQ',
+  'Integrating shells from r=0 to r=R'
+];
+
+function drawPage1(t) {
+  const ctx = getCtx(1);
+  const W = canvases[1].width, H = canvases[1].height;
+  bgDark(ctx, W, H);
+  const step = curStep[1];
+  const e = easeOut(Math.min(1, t * 1.6));
+  const cx = W * 0.42, cy = H * 0.5;
+  const R = H * 0.3, len = W * 0.5;
+
+  const ccx = W * 0.78, ccy = cy;
+  const N = 12;
+  for (let i = N; i >= 1; i--) {
+    const ri = (i/N)*R;
+    const vel = 1 - Math.pow(i/N, 2);
+    const hue = lerp(200, 20, 1 - vel);
+    ctx.beginPath(); ctx.arc(ccx, ccy, ri, 0, Math.PI*2);
+    ctx.fillStyle = `hsla(${hue},75%,50%,0.5)`; ctx.fill();
+    ctx.strokeStyle = `hsla(${hue},80%,60%,0.25)`; ctx.lineWidth = 0.8; ctx.stroke();
+  }
+  ctx.beginPath(); ctx.arc(ccx, ccy, R, 0, Math.PI*2);
+  ctx.strokeStyle = 'rgba(90,184,232,0.8)'; ctx.lineWidth = 2.5; ctx.stroke();
+
+  if (step >= 2) {
+    const shellR = R * 0.52, shellDR = R * 0.1;
+    ctx.globalAlpha = e * 0.9;
+    ctx.beginPath(); ctx.arc(ccx, ccy, shellR + shellDR, 0, Math.PI*2);
+    ctx.fillStyle = 'rgba(255,200,80,0.3)'; ctx.fill();
+    ctx.beginPath(); ctx.arc(ccx, ccy, shellR, 0, Math.PI*2);
+    ctx.fillStyle = 'rgba(7,24,40,0.8)'; ctx.fill();
+    ctx.beginPath(); ctx.arc(ccx, ccy, shellR + shellDR, 0, Math.PI*2);
+    ctx.strokeStyle = 'rgba(255,200,80,0.9)'; ctx.lineWidth = 2; ctx.stroke();
+    ctx.beginPath(); ctx.arc(ccx, ccy, shellR, 0, Math.PI*2);
+    ctx.strokeStyle = 'rgba(255,200,80,0.7)'; ctx.lineWidth = 1.5; ctx.stroke();
+    ctx.font = 'bold 12px Georgia,serif'; ctx.fillStyle = 'rgba(255,200,80,0.9)'; ctx.textAlign = 'left';
+    ctx.fillText('dr', ccx + shellR + shellDR/2 + 2, ccy - 4);
+    ctx.globalAlpha = 1;
+  }
+
+  const px = cx - len/2 + 20;
+  const maxU = len * 0.52 * e;
+
+  ctx.beginPath();
+  ctx.moveTo(px, cy - R); ctx.lineTo(px + len * 0.55, cy - R);
+  ctx.moveTo(px, cy + R); ctx.lineTo(px + len * 0.55, cy + R);
+  ctx.strokeStyle = 'rgba(90,184,232,0.6)'; ctx.lineWidth = 2; ctx.stroke();
+
+  ctx.beginPath();
+  for (let i = 0; i <= 80; i++) {
+    const frac = i/80, rv = (frac - 0.5)*2*R;
+    const u = (1 - Math.pow(rv/R, 2)) * maxU;
+    i === 0 ? ctx.moveTo(px + u, cy + rv) : ctx.lineTo(px + u, cy + rv);
+  }
+  ctx.strokeStyle = 'rgba(255,200,80,0.95)'; ctx.lineWidth = 2.5; ctx.stroke();
+
+  ctx.globalAlpha = 0.12;
+  ctx.beginPath();
+  ctx.moveTo(px, cy - R);
+  for (let i = 0; i <= 80; i++) {
+    const frac = i/80, rv = (frac-0.5)*2*R;
+    const u = (1 - Math.pow(rv/R, 2)) * maxU;
+    ctx.lineTo(px + u, cy + rv);
+  }
+  ctx.lineTo(px, cy + R); ctx.closePath();
+  ctx.fillStyle = 'rgba(255,200,80,1)'; ctx.fill();
+  ctx.globalAlpha = 1;
+
+  ctx.beginPath(); ctx.moveTo(px, cy - R - 8); ctx.lineTo(px, cy + R + 8);
+  ctx.strokeStyle = 'rgba(179,224,245,0.5)'; ctx.lineWidth = 1.5; ctx.stroke();
+
+  ctx.font = 'bold 12px Georgia,serif'; ctx.fillStyle = 'rgba(255,200,80,0.9)'; ctx.textAlign = 'left';
+  ctx.fillText('u_max', px + maxU + 4, cy);
+  ctx.fillStyle = 'rgba(179,224,245,0.7)'; ctx.textAlign = 'center';
+  ctx.fillText('u = 0', px - 2, cy - R - 12);
+
+  if (step === 0) {
+    ctx.globalAlpha = e;
+    ctx.beginPath(); ctx.arc(px, cy - R, 5, 0, Math.PI*2);
+    ctx.fillStyle = '#ff8040'; ctx.fill();
+    ctx.beginPath(); ctx.arc(px, cy + R, 5, 0, Math.PI*2);
+    ctx.fillStyle = '#ff8040'; ctx.fill();
+    ctx.font = '12px Nunito,sans-serif'; ctx.fillStyle = '#ff8040'; ctx.textAlign = 'left';
+    ctx.fillText('no-slip wall', px + 8, cy - R - 14);
+    ctx.globalAlpha = 1;
+  }
+
+  figLabels[1].textContent = p1FigLabels[step] || p1FigLabels[0];
+}
+
+function drawPage2(t) {
+  const ctx = getCtx(2);
+  const W = canvases[2].width, H = canvases[2].height;
+  bgDark(ctx, W, H);
+  const step = curStep[2];
+  const e = easeOut(Math.min(1, t * 1.6));
+  const cx = W * 0.5, cy = H * 0.48;
+  const R = H * 0.22, len = W * 0.7;
+
+  ctx.beginPath();
+  ctx.moveTo(cx - len/2, cy - R); ctx.lineTo(cx + len/2, cy - R);
+  ctx.moveTo(cx - len/2, cy + R); ctx.lineTo(cx + len/2, cy + R);
+  ctx.strokeStyle = 'rgba(90,184,232,0.75)'; ctx.lineWidth = 3; ctx.stroke();
+
+  const ex = len * 0.045;
+  [cx - len/2, cx + len/2].forEach(x => {
+    ctx.beginPath(); ctx.ellipse(x, cy, ex, R, 0, 0, Math.PI*2);
+    ctx.strokeStyle = 'rgba(90,184,232,0.5)'; ctx.lineWidth = 2; ctx.stroke();
+    ctx.fillStyle = 'rgba(13,84,128,0.25)'; ctx.fill();
+  });
+
+  const N = 16;
+  for (let i = N; i >= 1; i--) {
+    const ri = (i/N)*R, ri2 = ((i-1)/N)*R;
+    const vel = 1 - Math.pow((i-0.5)/N, 2);
+    const hue = lerp(200, 20, 1 - vel);
+    ctx.beginPath(); ctx.rect(cx - len/2, cy - ri, len, ri - ri2);
+    ctx.fillStyle = `hsla(${hue},75%,50%,0.48)`; ctx.fill();
+    ctx.beginPath(); ctx.rect(cx - len/2, cy + ri2, len, ri - ri2);
+    ctx.fillStyle = `hsla(${hue},75%,50%,0.48)`; ctx.fill();
+  }
+
+  for (let i = 0; i < 9; i++) {
+    const frac = i / 8;
+    const y = cy - R + frac * 2 * R;
+    const rv = Math.abs(y - cy);
+    const vel = (1 - Math.pow(rv / R, 2)) * e;
+    const aLen = vel * len * 0.32;
+    const hue = lerp(200, 20, 1 - (1 - Math.pow(rv/R,2)));
+    if (aLen > 2) arrowLine(ctx, cx - len/2 + 16, y, cx - len/2 + 16 + aLen, y,
+      `hsla(${hue},85%,65%,0.9)`, 1.8 + vel * 1.5);
+  }
+
+  ctx.globalAlpha = e;
+  arrowLine(ctx, cx - len/2, cy - R - 22, cx + len/2 - 10, cy - R - 22, 'rgba(255,200,80,0.85)', 2);
+  ctx.font = 'bold 13px Georgia,serif'; ctx.fillStyle = 'rgba(255,200,80,0.9)'; ctx.textAlign = 'center';
+  ctx.fillText('ΔP', cx, cy - R - 30);
+
+  const dx = cx + len/2 + 28;
+  ctx.beginPath(); ctx.moveTo(dx, cy - R); ctx.lineTo(dx, cy + R);
+  ctx.setLineDash([4,3]); ctx.strokeStyle='rgba(179,224,245,0.55)'; ctx.lineWidth=1.5; ctx.stroke(); ctx.setLineDash([]);
+  arrowLine(ctx, dx, cy - R + 1, dx, cy - R - 6, 'rgba(179,224,245,0.7)', 1.5);
+  arrowLine(ctx, dx, cy + R - 1, dx, cy + R + 6, 'rgba(179,224,245,0.7)', 1.5);
+  ctx.font = 'bold 13px Georgia,serif'; ctx.fillStyle = 'rgba(179,224,245,0.9)'; ctx.textAlign = 'left';
+  ctx.fillText('D', dx + 7, cy + 5);
+
+  const ly = cy + R + 28;
+  ctx.beginPath(); ctx.moveTo(cx - len/2, ly); ctx.lineTo(cx + len/2, ly);
+  ctx.strokeStyle = 'rgba(179,224,245,0.4)'; ctx.lineWidth = 1.2; ctx.stroke();
+  arrowLine(ctx, cx - len/2, ly, cx - len/2 - 1, ly, 'rgba(179,224,245,0.6)', 1.5);
+  arrowLine(ctx, cx + len/2, ly, cx + len/2 + 1, ly, 'rgba(179,224,245,0.6)', 1.5);
+  ctx.font = 'bold 13px Georgia,serif'; ctx.fillStyle = 'rgba(179,224,245,0.7)'; ctx.textAlign = 'center';
+  ctx.fillText('L', cx, ly + 14);
+  ctx.globalAlpha = 1;
+
+  ctx.globalAlpha = e;
+  const bx = cx, by = cy + R + 52;
+  roundRect(ctx, bx - 165, by - 22, 330, 44, 10);
+  ctx.fillStyle = 'rgba(13,84,128,0.85)'; ctx.fill();
+  ctx.strokeStyle = 'rgba(90,184,232,0.85)'; ctx.lineWidth = 2; ctx.stroke();
+  ctx.font = 'bold 19px Georgia,serif'; ctx.fillStyle = 'rgba(255,220,60,1)'; ctx.textAlign = 'center';
+  ctx.fillText('Q = πD⁴Δp / 128μL', bx, by + 7);
+  ctx.globalAlpha = 1;
+
+  ctx.beginPath(); ctx.moveTo(cx - len/2 + 8, cy); ctx.lineTo(cx + len/2 - 8, cy);
+  ctx.setLineDash([6,5]); ctx.strokeStyle='rgba(255,255,255,0.15)'; ctx.lineWidth=1; ctx.stroke(); ctx.setLineDash([]);
+
+  figLabels[2].textContent = step === 0
+    ? 'Step 11 — Evaluating ∫(R²r − r³)dr = R⁴/4'
+    : "Step 12 — Poiseuille's Law: Q = πD⁴Δp / 128μL";
+}
+
+function roundRect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x+r,y); ctx.lineTo(x+w-r,y);
+  ctx.quadraticCurveTo(x+w,y,x+w,y+r);
+  ctx.lineTo(x+w,y+h-r); ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);
+  ctx.lineTo(x+r,y+h); ctx.quadraticCurveTo(x,y+h,x,y+h-r);
+  ctx.lineTo(x,y+r); ctx.quadraticCurveTo(x,y,x+r,y);
+  ctx.closePath();
+}
+
+function animate(time) {
+  const dt = Math.min((time - lastTime)/1000, 0.05);
+  lastTime = time;
+  animT = Math.min(animT + dt, 3);
+  drawPage0(animT);
+  drawPage1(animT);
+  drawPage2(animT);
+  requestAnimationFrame(animate);
+}
+
+window.addEventListener('resize', () => { resize(); animT = 0; });
+resize();
+updateNav();
+requestAnimationFrame(animate);
+</script>
+</body>
+</html>

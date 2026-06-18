@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Poiseuille's Law — Discretization</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet"/>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --sky:#e0f4ff; --sky-light:#f0f9ff; --sky-mid:#b3dff5;
+    --sky-deep:#5ab8e8; --sky-dark:#1a7db5; --sky-darkest:#0d5480;
+    --white:#ffffff; --text-main:#0d3d5c; --text-muted:#3a7096; --tab-bg:#cceaf8;
+  }
+  html, body { height:100%; overflow:hidden; }
+  body { font-family:'Nunito',sans-serif; background:var(--sky-light); color:var(--text-main); display:flex; flex-direction:column; }
+
+  /* ── NAV (reality style) ── */
+  .nav-wrap {
+    background: var(--sky);
+    border-bottom: 2.5px solid var(--sky-deep);
+    padding: 10px 24px;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+  }
+
+  .nav-btn {
+    background: var(--sky-dark);
+    color: var(--white);
+    border: none;
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    transition: background 0.2s;
+    flex-shrink: 0;
+  }
+  .nav-btn:hover { background: var(--sky-darkest); }
+
+  .nav-tabs {
+    display: flex;
+    align-items: flex-end;
+    gap: 60px;
+    list-style: none;
+    margin: 0 auto;
+  }
+  .nav-tabs a { text-decoration: none; color: inherit; }
+
+  .nav-tab {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 0;
+    border-radius: 12px 12px 0 0;
+    cursor: pointer;
+    background: var(--tab-bg);
+    border: 1.5px solid var(--sky-mid);
+    border-bottom: none;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text-muted);
+    min-width: 160px;
+    transition: background 0.2s, color 0.2s;
+    user-select: none;
+    overflow: hidden;
+  }
+  .nav-tab:hover { background: var(--sky-mid); }
+  .nav-tab.active {
+    background: var(--white);
+    border-color: var(--sky-deep);
+    border-bottom: 2.5px solid var(--white);
+    color: var(--sky-darkest);
+    margin-bottom: -2.5px;
+    z-index: 2;
+  }
+
+  .tab-img-container {
+    width: 100%;
+    height: 100px;
+    background: #d1d5db;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-bottom: 1px solid var(--sky-mid);
+  }
+  .tab-img-container img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .tab-label { padding: 12px 10px; text-align: center; width: 100%; }
+
+  /* MAIN CONTENT */
+  .content-wrap {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 40% 60%;
+    overflow: hidden;
+    padding: 14px 24px 12px;
+    gap: 24px;
+    min-height: 0;
+  }
+
+  /* LEFT */
+  .left-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    min-height: 0;
+  }
+  .left-panel h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 22px; font-weight: 700;
+    color: var(--sky-darkest);
+    border-left: 5px solid var(--sky-deep);
+    padding-left: 12px;
+    flex-shrink: 0;
+  }
+
+  .concept-block {
+    background: var(--white);
+    border: 1.5px solid var(--sky-mid);
+    border-left: 5px solid var(--sky-deep);
+    border-radius: 0 12px 12px 0;
+    padding: 14px 16px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-evenly;
+    gap: 10px;
+    min-height: 0;
+  }
+  .concept-block p {
+    font-size: 15px; line-height: 1.7;
+    color: var(--text-main); font-weight: 600;
+  }
+  .concept-block p span { color: var(--sky-darkest); font-weight: 800; }
+
+  /* RIGHT */
+  .right-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    min-height: 0;
+  }
+
+  /* Step tabs */
+  .step-tabs {
+    display: flex; gap: 6px;
+    flex-shrink: 0;
+  }
+  .step-btn {
+    flex: 1;
+    padding: 7px 4px;
+    border-radius: 8px;
+    border: 1.5px solid var(--sky-mid);
+    background: var(--sky);
+    color: var(--text-muted);
+    font-family: 'Nunito', sans-serif;
+    font-size: 12px; font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: center;
+  }
+  .step-btn.active {
+    background: var(--sky-darkest);
+    color: var(--white);
+    border-color: var(--sky-darkest);
+  }
+  .step-btn:hover:not(.active) { background: var(--sky-mid); }
+
+  /* Canvas */
+  .canvas-wrap {
+    border-radius: 14px;
+    overflow: hidden;
+    border: 2px solid var(--sky-mid);
+    background: #071828;
+    flex: 1;
+    min-height: 0;
+    position: relative;
+  }
+  canvas { width: 100%; height: 100%; display: block; }
+
+  /* Description bar */
+  .desc-bar {
+    background: var(--white);
+    border: 1.5px solid var(--sky-mid);
+    border-radius: 10px;
+    padding: 9px 14px;
+    font-size: 13px; font-weight: 600;
+    color: var(--text-main);
+    line-height: 1.5;
+    flex-shrink: 0;
+    min-height: 42px;
+    transition: opacity 0.3s;
+  }
+  .desc-bar strong { color: var(--sky-darkest); }
+</style>
+</head>
+<body>
+
+<div class="nav-wrap">
+  <button class="nav-btn" onclick="window.location.href='idealization.html'">&#9664;</button>
+  <ul class="nav-tabs">
+    <a href="reality.html">
+      <li class="nav-tab">
+        <div class="tab-img-container"><img src="reality.jpg" alt="Reality" onerror="this.style.display='none'"></div>
+        <div class="tab-label">Reality</div>
+      </li>
+    </a>
+    <a href="idealization.html">
+      <li class="nav-tab">
+        <div class="tab-img-container"><img src="idealization.jpg.png" alt="Idealization" onerror="this.style.display='none'"></div>
+        <div class="tab-label">Idealization</div>
+      </li>
+    </a>
+    <a href="discretization.html">
+      <li class="nav-tab active">
+        <div class="tab-img-container"><img src="discretization.png.jpeg" alt="Discretization" onerror="this.style.display='none'"></div>
+        <div class="tab-label">Discretization</div>
+      </li>
+    </a>
+    <a href="geometric.html">
+      <li class="nav-tab">
+        <div class="tab-img-container"><img src="geometry.jpg.png" alt="Geometric" onerror="this.style.display='none'"></div>
+        <div class="tab-label">Geometric</div>
+      </li>
+    </a>
+    <a href="algebraic.html">
+      <li class="nav-tab">
+        <div class="tab-img-container"><img src="algebraic.png.jpeg" alt="Algebraic" onerror="this.style.display='none'"></div>
+        <div class="tab-label">Algebraic</div>
+      </li>
+    </a>
+  </ul>
+  <button class="nav-btn" onclick="window.location.href='geometric.html'">&#9654;</button>
+</div>
+
+<main class="content-wrap">
+
+  <!-- LEFT -->
+  <section class="left-panel">
+    <h2>Discretization</h2>
+
+    <div class="concept-block">
+      <p>We divide the fluid inside the cylinder into <span>thin concentric cylindrical shells</span> of radius <span>r</span> and thickness <span>dr</span>.</p>
+
+      <p>Each shell carries fluid at a <span>different velocity</span> — faster at the centre, slower near the walls due to viscosity.</p>
+
+      <p>The velocity profile across the pipe cross-section is <span>parabolic</span> — maximum at the centre, zero at the wall.</p>
+
+      <p>The total <span>flow rate Q</span> is found by summing (integrating) the contributions of <span>all shells</span> from the centre to the wall.</p>
+    </div>
+  </section>
+
+  <!-- RIGHT -->
+  <section class="right-panel">
+    <div class="step-tabs">
+      <button class="step-btn active" onclick="setStep(0)">Full Cylinder</button>
+      <button class="step-btn" onclick="setStep(1)">One Shell</button>
+      <button class="step-btn" onclick="setStep(2)">All Shells</button>
+      <button class="step-btn" onclick="setStep(3)">Velocity Profile</button>
+      <button class="step-btn" onclick="setStep(4)">Flow Rate Q</button>
+    </div>
+
+    <div class="canvas-wrap">
+      <canvas id="vizCanvas"></canvas>
+    </div>
+
+    <div class="desc-bar" id="descBar">
+      The idealised cylinder of radius <strong>R</strong> carries viscous fluid under pressure difference <strong>ΔP</strong>.
+    </div>
+  </section>
+
+</main>
+
+<script>
+const canvas = document.getElementById('vizCanvas');
+const ctx = canvas.getContext('2d');
+const descBar = document.getElementById('descBar');
+let currentStep = 0;
+let animT = 0;
+let lastTime = 0;
+
+const steps = [
+  {
+    label: 'Full Cylinder',
+    desc: 'The idealised cylinder of radius <strong>R</strong> carries viscous fluid under pressure difference <strong>ΔP</strong>.',
+    draw: drawCylinder
+  },
+  {
+    label: 'One Shell',
+    desc: 'We isolate one thin cylindrical shell at radius <strong>r</strong> with thickness <strong>dr</strong>. Each shell has a small cross-sectional area.',
+    draw: drawOneShell
+  },
+  {
+    label: 'All Shells',
+    desc: 'The cylinder is filled with <strong>many concentric shells</strong>. Each shell moves at a different velocity — this is discretization.',
+    draw: drawAllShells
+  },
+  {
+    label: 'Velocity Profile',
+    desc: 'Velocity is <strong>maximum at the centre (r = 0)</strong> and zero at the wall (r = R). The profile is parabolic in shape.',
+    draw: drawVelocityProfile
+  },
+  {
+    label: 'Flow Rate Q',
+    desc: 'Summing all shell contributions gives the total <strong>flow rate Q</strong>. Flow is very sensitive to the radius — small change in R, big change in Q!',
+    draw: drawFlowRate
+  }
+];
+
+function setStep(i) {
+  currentStep = i;
+  animT = 0;
+  document.querySelectorAll('.step-btn').forEach((b,j) => b.classList.toggle('active', i===j));
+  descBar.innerHTML = steps[i].desc;
+}
+
+function resize() {
+  const wrap = canvas.parentElement;
+  if (wrap) {
+    canvas.width = wrap.clientWidth;
+    canvas.height = wrap.clientHeight;
+  }
+}
+
+function lerp(a,b,t){ return a+(b-a)*t; }
+function easeOut(t){ return 1-(1-t)*(1-t); }
+
+// ── DRAW HELPERS ──
+
+function drawBg() {
+  const W=canvas.width, H=canvas.height;
+  const bg = ctx.createLinearGradient(0,0,0,H);
+  bg.addColorStop(0,'#071828'); bg.addColorStop(1,'#0d2a42');
+  ctx.fillStyle=bg; ctx.fillRect(0,0,W,H);
+}
+
+function cylinderPath(cx, cy, R, len) {
+  ctx.beginPath();
+  ctx.moveTo(cx - len/2, cy - R);
+  ctx.lineTo(cx + len/2, cy - R);
+  ctx.moveTo(cx - len/2, cy + R);
+  ctx.lineTo(cx + len/2, cy + R);
+  ctx.strokeStyle='rgba(90,184,232,0.9)'; ctx.lineWidth=2.5; ctx.stroke();
+  [cx-len/2, cx+len/2].forEach(ex => {
+    ctx.beginPath();
+    ctx.ellipse(ex, cy, 7, R, 0, 0, Math.PI*2);
+    ctx.strokeStyle='rgba(90,184,232,0.7)'; ctx.lineWidth=2; ctx.stroke();
+    ctx.fillStyle='rgba(26,125,181,0.2)'; ctx.fill();
+  });
+}
+
+function drawCylinder(t) {
+  const W=canvas.width, H=canvas.height;
+  const cx=W/2, cy=H/2, R=H*0.3, len=W*0.62;
+  drawBg();
+
+  ctx.beginPath();
+  ctx.rect(cx-len/2, cy-R, len, R*2);
+  const fill = ctx.createLinearGradient(0,cy-R,0,cy+R);
+  fill.addColorStop(0,'rgba(26,90,140,0.5)');
+  fill.addColorStop(0.5,'rgba(4,20,40,0.7)');
+  fill.addColorStop(1,'rgba(26,90,140,0.5)');
+  ctx.fillStyle=fill; ctx.fill();
+
+  cylinderPath(cx,cy,R,len);
+
+  // Labels
+  ctx.font='bold 14px Nunito,sans-serif';
+  ctx.fillStyle='rgba(179,224,245,0.9)'; ctx.textAlign='center';
+  ctx.fillText('R', cx+len/2+22, cy+5);
+  ctx.beginPath(); ctx.moveTo(cx+len/2+18,cy); ctx.lineTo(cx+len/2+18,cy-R);
+  ctx.setLineDash([4,3]); ctx.strokeStyle='rgba(179,224,245,0.6)'; ctx.lineWidth=1.5; ctx.stroke();
+  ctx.setLineDash([]);
+
+  // ΔP arrow
+  const arrowY = cy - R - 20;
+  ctx.beginPath();
+  ctx.moveTo(cx-len/2, arrowY); ctx.lineTo(cx+len/2-10, arrowY);
+  ctx.strokeStyle='rgba(255,200,80,0.85)'; ctx.lineWidth=2; ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(cx+len/2-10,arrowY); ctx.lineTo(cx+len/2-20,arrowY-6); ctx.lineTo(cx+len/2-20,arrowY+6);
+  ctx.closePath(); ctx.fillStyle='rgba(255,200,80,0.85)'; ctx.fill();
+  ctx.font='bold 13px Nunito,sans-serif'; ctx.fillStyle='rgba(255,200,80,0.9)';
+  ctx.fillText('ΔP', cx, arrowY-10);
+
+  // centre axis
+  ctx.beginPath();
+  ctx.moveTo(cx-len/2+10,cy); ctx.lineTo(cx+len/2-10,cy);
+  ctx.setLineDash([6,4]); ctx.strokeStyle='rgba(255,255,255,0.2)'; ctx.lineWidth=1; ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.font='12px Nunito,sans-serif'; ctx.fillStyle='rgba(255,255,255,0.35)';
+  ctx.fillText('axis', cx, cy+R+18);
+}
+
+function drawOneShell(t) {
+  const W=canvas.width, H=canvas.height;
+  const cx=W*0.38, cy=H/2, R=H*0.28, len=W*0.48;
+  drawBg();
+
+  ctx.globalAlpha=0.25;
+  ctx.beginPath(); ctx.rect(cx-len/2,cy-R,len,R*2);
+  ctx.fillStyle='rgba(26,90,140,0.4)'; ctx.fill();
+  ctx.globalAlpha=0.4; cylinderPath(cx,cy,R,len); ctx.globalAlpha=1;
+
+  const r = R*0.52, dr = R*0.12;
+  const ease = easeOut(Math.min(1,t*2));
+
+  ctx.globalAlpha=ease;
+  ctx.beginPath(); ctx.rect(cx-len/2, cy-r-dr, len, dr);
+  ctx.fillStyle='rgba(90,184,232,0.35)'; ctx.fill();
+  ctx.beginPath(); ctx.rect(cx-len/2, cy+r, len, dr);
+  ctx.fillStyle='rgba(90,184,232,0.35)'; ctx.fill();
+
+  ['top','bot'].forEach(side => {
+    [r, r+dr].forEach(rv => {
+      const y = side==='top' ? cy-rv : cy+rv;
+      ctx.beginPath(); ctx.moveTo(cx-len/2,y); ctx.lineTo(cx+len/2,y);
+      ctx.strokeStyle='rgba(90,220,255,0.9)'; ctx.lineWidth=1.8; ctx.stroke();
+    });
+  });
+  ctx.globalAlpha=1;
+
+  // right side diagram (cross section)
+  const rx2=W*0.76, ry2=cy;
+  ctx.beginPath(); ctx.arc(rx2,ry2,R,0,Math.PI*2);
+  ctx.strokeStyle='rgba(90,184,232,0.6)'; ctx.lineWidth=2; ctx.stroke();
+  ctx.fillStyle='rgba(4,20,40,0.6)'; ctx.fill();
+
+  ctx.globalAlpha=ease;
+  ctx.beginPath(); ctx.arc(rx2,ry2,r+dr,0,Math.PI*2);
+  ctx.fillStyle='rgba(90,184,232,0.3)'; ctx.fill();
+  ctx.beginPath(); ctx.arc(rx2,ry2,r,0,Math.PI*2);
+  ctx.fillStyle='rgba(4,20,40,0.7)'; ctx.fill();
+  ctx.beginPath(); ctx.arc(rx2,ry2,r+dr,0,Math.PI*2);
+  ctx.strokeStyle='rgba(90,220,255,0.9)'; ctx.lineWidth=2; ctx.stroke();
+  ctx.beginPath(); ctx.arc(rx2,ry2,r,0,Math.PI*2);
+  ctx.strokeStyle='rgba(90,220,255,0.7)'; ctx.lineWidth=1.5; ctx.stroke();
+  ctx.globalAlpha=1;
+
+  // labels
+  ctx.font='bold 13px Nunito,sans-serif'; ctx.fillStyle='rgba(179,224,245,0.95)';
+  ctx.textAlign='left';
+  ctx.beginPath(); ctx.moveTo(rx2,ry2); ctx.lineTo(rx2+r*0.7,ry2-r*0.7);
+  ctx.setLineDash([4,3]); ctx.strokeStyle='rgba(179,224,245,0.7)'; ctx.lineWidth=1.5; ctx.stroke(); ctx.setLineDash([]);
+  ctx.fillText('r', rx2+r*0.72, ry2-r*0.72-4);
+
+  ctx.fillStyle='rgba(90,220,255,0.95)';
+  ctx.fillText('dr', rx2+r+dr+6, ry2+4);
+
+  // Area label — words only, no formula
+  ctx.font='13px Nunito,sans-serif'; ctx.fillStyle='rgba(255,220,100,0.85)';
+  ctx.textAlign='center';
+  ctx.fillText('thin ring area', rx2, ry2+R+20);
+}
+
+function drawAllShells(t) {
+  const W=canvas.width, H=canvas.height;
+  const cx=W*0.38, cy=H/2, R=H*0.29, len=W*0.48;
+  drawBg();
+
+  const N=10;
+  const ease=easeOut(Math.min(1,t*1.5));
+  const shells = Math.ceil(ease*N);
+
+  for(let i=N;i>=1;i--) {
+    const r1=(i/N)*R, r2=((i-1)/N)*R;
+    const hue = lerp(200,240,(i/N));
+    const alpha = i<=shells ? 0.7 : 0.15;
+    ctx.globalAlpha=alpha;
+    ctx.beginPath(); ctx.rect(cx-len/2, cy-r1, len, r1-r2);
+    const c1=`hsla(${hue},80%,55%,0.4)`;
+    ctx.fillStyle=c1; ctx.fill();
+    ctx.beginPath(); ctx.rect(cx-len/2, cy+r2, len, r1-r2);
+    ctx.fillStyle=c1; ctx.fill();
+    ctx.beginPath(); ctx.moveTo(cx-len/2,cy-r1); ctx.lineTo(cx+len/2,cy-r1);
+    ctx.moveTo(cx-len/2,cy+r1); ctx.lineTo(cx+len/2,cy+r1);
+    ctx.strokeStyle=`hsla(${hue},90%,70%,0.6)`; ctx.lineWidth=1; ctx.stroke();
+    ctx.globalAlpha=1;
+  }
+
+  cylinderPath(cx,cy,R,len);
+
+  const rx2=W*0.77, ry2=cy;
+  for(let i=N;i>=1;i--) {
+    const r=(i/N)*R;
+    const hue=lerp(200,240,(i/N));
+    const alpha=i<=shells ? 0.65 : 0.12;
+    ctx.globalAlpha=alpha;
+    ctx.beginPath(); ctx.arc(rx2,ry2,r,0,Math.PI*2);
+    ctx.fillStyle=`hsla(${hue},75%,50%,0.35)`; ctx.fill();
+    ctx.strokeStyle=`hsla(${hue},85%,65%,0.7)`; ctx.lineWidth=1; ctx.stroke();
+    ctx.globalAlpha=1;
+  }
+
+  ctx.font='bold 12px Nunito,sans-serif'; ctx.fillStyle='rgba(179,224,245,0.8)';
+  ctx.textAlign='center';
+  ctx.fillText(`${shells} shells shown`, cx, cy+R+18);
+  ctx.fillText('Cross-section', rx2, cy+R+18);
+}
+
+function drawVelocityProfile(t) {
+  const W=canvas.width, H=canvas.height;
+  const cx=W*0.35, cy=H/2, R=H*0.29, len=W*0.46;
+  drawBg();
+
+  const ease=easeOut(Math.min(1,t*1.4));
+  const N=12;
+
+  for(let i=1;i<=N;i++) {
+    const r=((i-0.5)/N)*R;
+    const vel=1-Math.pow(r/R,2);
+    const hue=lerp(200,20,1-vel);
+    const thick=R/N;
+    ctx.beginPath(); ctx.rect(cx-len/2, cy-r-thick/2, len, thick);
+    ctx.fillStyle=`hsla(${hue},80%,55%,${0.5+vel*0.35})`; ctx.fill();
+    ctx.beginPath(); ctx.rect(cx-len/2, cy+r-thick/2, len, thick);
+    ctx.fillStyle=`hsla(${hue},80%,55%,${0.5+vel*0.35})`; ctx.fill();
+  }
+
+  cylinderPath(cx,cy,R,len);
+
+  for(let i=0;i<7;i++) {
+    const frac=i/6;
+    const y=cy - R + frac*2*R;
+    const r=Math.abs(y-cy);
+    const vel=(1-Math.pow(r/R,2))*ease;
+    const maxArrow=len*0.38;
+    const aLen=vel*maxArrow;
+    const ax=cx-len/2+30;
+    ctx.beginPath(); ctx.moveTo(ax,y); ctx.lineTo(ax+aLen,y);
+    const vel1=1-Math.pow(r/R,2);
+    const hue=lerp(200,20,1-vel1);
+    ctx.strokeStyle=`hsla(${hue},90%,70%,0.9)`; ctx.lineWidth=2; ctx.stroke();
+    if(aLen>10) {
+      ctx.beginPath();
+      ctx.moveTo(ax+aLen,y); ctx.lineTo(ax+aLen-8,y-5); ctx.lineTo(ax+aLen-8,y+5);
+      ctx.closePath(); ctx.fillStyle=`hsla(${hue},90%,70%,0.9)`; ctx.fill();
+    }
+  }
+
+  // Parabola on right
+  const px=W*0.77, pMaxX=px+W*0.1;
+  ctx.beginPath();
+  for(let i=0;i<=60;i++) {
+    const frac=i/60;
+    const r=(frac-0.5)*2*R;
+    const vel=ease*(1-Math.pow(r/R,2));
+    const x=px+vel*(pMaxX-px);
+    const y=cy+r;
+    i===0 ? ctx.moveTo(x,y) : ctx.lineTo(x,y);
+  }
+  ctx.strokeStyle='rgba(255,200,80,0.9)'; ctx.lineWidth=2.5; ctx.stroke();
+
+  ctx.beginPath(); ctx.moveTo(px,cy-R); ctx.lineTo(px,cy+R);
+  ctx.strokeStyle='rgba(255,255,255,0.3)'; ctx.lineWidth=1.5; ctx.stroke();
+
+  ctx.font='bold 12px Nunito,sans-serif'; ctx.fillStyle='rgba(255,200,80,0.9)';
+  ctx.textAlign='center';
+  ctx.fillText('velocity', pMaxX+20, cy);
+  ctx.fillText('parabolic shape', px+30, cy+R+18);
+
+  ctx.font='12px Nunito,sans-serif'; ctx.fillStyle='rgba(179,224,245,0.7)';
+  ctx.fillText('max speed at centre', cx, cy-R-12);
+}
+
+function drawFlowRate(t) {
+  const W=canvas.width, H=canvas.height;
+  const cx=W/2, cy=H/2, R=H*0.28;
+  drawBg();
+
+  const ease=easeOut(Math.min(1,t*1.3));
+
+  const N=14;
+  for(let i=N;i>=1;i--) {
+    const r=(i/N)*R;
+    const vel=1-Math.pow(r/R,2);
+    const hue=lerp(220,10,1-vel);
+    ctx.beginPath(); ctx.arc(cx,cy,r,0,Math.PI*2);
+    ctx.fillStyle=`hsla(${hue},80%,55%,0.5)`; ctx.fill();
+    ctx.strokeStyle=`hsla(${hue},85%,65%,0.3)`; ctx.lineWidth=0.8; ctx.stroke();
+  }
+  ctx.beginPath(); ctx.arc(cx,cy,R,0,Math.PI*2);
+  ctx.strokeStyle='rgba(90,184,232,0.9)'; ctx.lineWidth=2.5; ctx.stroke();
+
+  const time=Date.now()*0.001;
+  ctx.globalAlpha=ease*0.8;
+  for(let i=0;i<20;i++) {
+    const angle=(i/20)*Math.PI*2+time*(0.3+i*0.02);
+    const r=((i%N+0.5)/N)*R;
+    const vel=1-Math.pow(r/R,2);
+    const px2=cx+Math.cos(angle)*r*0.5;
+    const py=cy+Math.sin(angle)*r*0.5;
+    ctx.beginPath(); ctx.arc(px2,py,2+vel*2,0,Math.PI*2);
+    ctx.fillStyle=`rgba(180,230,255,0.9)`; ctx.fill();
+  }
+  ctx.globalAlpha=1;
+
+  // Info box — words only
+  const bx=cx+R+20, by=cy-50, bw=W*0.28, bh=100;
+  if(bx+bw < W-10) {
+    ctx.beginPath();
+    roundRect(ctx, bx, by, bw, bh, 10);
+    ctx.fillStyle='rgba(13,84,128,0.85)'; ctx.fill();
+    ctx.strokeStyle='rgba(90,184,232,0.7)'; ctx.lineWidth=1.5; ctx.stroke();
+
+    ctx.font='bold 12px Nunito,sans-serif'; ctx.fillStyle='rgba(179,224,245,0.9)';
+    ctx.textAlign='center';
+    ctx.fillText('Poiseuille\'s Law', bx+bw/2, by+24);
+
+    ctx.font='13px Nunito,sans-serif'; ctx.fillStyle='rgba(255,220,80,0.95)';
+    ctx.fillText('Total flow rate Q', bx+bw/2, by+50);
+    ctx.fillText('= sum of all shells', bx+bw/2, by+68);
+
+    ctx.font='12px Nunito,sans-serif'; ctx.fillStyle='rgba(179,224,245,0.75)';
+    ctx.fillText('Q grows strongly with R', bx+bw/2, by+90);
+  }
+
+  ctx.font='bold 12px Nunito,sans-serif'; ctx.fillStyle='rgba(255,200,80,0.8)';
+  ctx.textAlign='center';
+  ctx.fillText('Q = sum of (velocity × area) for every shell', cx, cy+R+20);
+
+  ctx.beginPath(); ctx.moveTo(cx,cy); ctx.lineTo(cx+R,cy);
+  ctx.setLineDash([4,3]); ctx.strokeStyle='rgba(179,224,245,0.5)'; ctx.lineWidth=1.5; ctx.stroke(); ctx.setLineDash([]);
+  ctx.font='bold 13px Nunito,sans-serif'; ctx.fillStyle='rgba(179,224,245,0.9)';
+  ctx.textAlign='left'; ctx.fillText('R', cx+R/2, cy-8);
+}
+
+function roundRect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x+r,y); ctx.lineTo(x+w-r,y);
+  ctx.quadraticCurveTo(x+w,y,x+w,y+r);
+  ctx.lineTo(x+w,y+h-r); ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);
+  ctx.lineTo(x+r,y+h); ctx.quadraticCurveTo(x,y+h,x,y+h-r);
+  ctx.lineTo(x,y+r); ctx.quadraticCurveTo(x,y,x+r,y);
+  ctx.closePath();
+}
+
+function animate(time) {
+  const dt = Math.min((time-lastTime)/1000, 0.05);
+  lastTime=time;
+  animT = Math.min(animT+dt, 2);
+  steps[currentStep].draw(animT);
+  requestAnimationFrame(animate);
+}
+
+window.addEventListener('resize', () => { resize(); animT=0; });
+resize();
+requestAnimationFrame(animate);
+</script>
+</body>
+</html>

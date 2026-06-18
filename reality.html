@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Poiseuille's Law — Reality</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet"/>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --sky: #e0f4ff;
+    --sky-light: #f0f9ff;
+    --sky-mid: #b3dff5;
+    --sky-deep: #5ab8e8;
+    --sky-dark: #1a7db5;
+    --sky-darkest: #0d5480;
+    --white: #ffffff;
+    --text-main: #0d3d5c;
+    --text-muted: #3a7096;
+    --tab-bg: #cceaf8;
+  }
+
+  body {
+    font-family: 'Nunito', sans-serif;
+    background: var(--sky-light);
+    color: var(--text-main);
+    min-height: 100vh;
+  }
+
+  /* Header removed as requested */
+
+  /* Nav wrap setup with triangle buttons at ends */
+  .nav-wrap {
+    background: var(--sky);
+    border-bottom: 2.5px solid var(--sky-deep);
+    padding: 10px 24px;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  /* Triangle buttons */
+  .nav-btn {
+    background: var(--sky-dark);
+    color: var(--white);
+    border: none;
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    transition: background 0.2s;
+  }
+  .nav-btn:hover {
+    background: var(--sky-darkest);
+  }
+
+  .nav-tabs {
+    display: flex;
+    align-items: flex-end;
+    gap: 60px; /* Increased spacing between cards even more */
+    list-style: none;
+    margin: 0 auto;
+  }
+  
+  .nav-tabs a {
+    text-decoration: none;
+    color: inherit;
+  }
+
+  /* Card design: full card, no blue circle */
+  .nav-tab {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 0;
+    border-radius: 12px 12px 0 0;
+    cursor: pointer;
+    background: var(--tab-bg);
+    border: 1.5px solid var(--sky-mid);
+    border-bottom: none;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text-muted);
+    min-width: 160px;
+    transition: background 0.2s, color 0.2s;
+    user-select: none;
+    overflow: hidden;
+  }
+  
+  .nav-tab:hover { background: var(--sky-mid); }
+  
+  .nav-tab.active {
+    background: var(--white);
+    border-color: var(--sky-deep);
+    border-bottom: 2.5px solid var(--white);
+    color: var(--sky-darkest);
+    margin-bottom: -2.5px;
+    z-index: 2;
+  }
+  
+  /* Image section filling the top part of the card */
+  .tab-img-container {
+    width: 100%;
+    height: 100px;
+    background: #d1d5db; /* Light grey placeholder */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-bottom: 1px solid var(--sky-mid);
+  }
+  
+  .tab-img-container img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  .tab-label {
+    padding: 12px 10px;
+    text-align: center;
+    width: 100%;
+  }
+
+  /* Main content layout */
+  .content-wrap {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 2rem 24px;
+    display: grid;
+    grid-template-columns: 400px 1fr;
+    gap: 32px;
+    align-items: start;
+  }
+
+  /* Left Panel */
+  .left-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .left-panel h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 24px; font-weight: 700;
+    color: var(--sky-darkest);
+    border-left: 5px solid var(--sky-deep);
+    padding-left: 12px;
+  }
+  .q-card {
+    background: var(--white);
+    border: 1.5px solid var(--sky-mid);
+    border-left: 5px solid var(--sky-deep);
+    border-radius: 0 12px 12px 0;
+    padding: 13px 16px;
+  }
+  .q-card .scenario {
+    font-size: 13.5px;
+    line-height: 1.7;
+    color: var(--text-main);
+    margin-bottom: 8px;
+  }
+  .q-card .q-label {
+    display: inline-block;
+    font-size: 11px; font-weight: 800;
+    text-transform: uppercase;
+    color: var(--white);
+    background: var(--sky-dark);
+    border-radius: 5px;
+    padding: 3px 10px;
+    margin-bottom: 5px;
+  }
+  .q-card .q-text {
+    font-size: 13.5px; font-weight: 700;
+    color: var(--sky-darkest);
+    font-style: italic;
+    line-height: 1.5;
+  }
+
+  /* Right Panel */
+  .right-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .img-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+  .img-card {
+    border-radius: 14px;
+    overflow: hidden;
+    border: 2px solid var(--sky-mid);
+    height: 320px;
+    background: var(--sky);
+    position: relative;
+  }
+  .img-card img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+  .img-caption {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    background: rgba(13,84,128,0.75);
+    color: #e0f4ff;
+    font-size: 12px; font-weight: 700;
+    text-align: center;
+    padding: 7px 8px;
+  }
+
+  .cta-btn {
+    background: var(--sky-dark);
+    color: var(--white);
+    border: none;
+    border-radius: 10px;
+    padding: 16px 20px;
+    font-size: 15px; font-weight: 800;
+    cursor: pointer;
+    width: 100%;
+    text-align: center;
+  }
+</style>
+</head>
+<body>
+
+<div class="nav-wrap">
+  <!-- Left triangle button -->
+  <button class="nav-btn" onclick="window.history.back()">&#9664;</button>
+
+  <ul class="nav-tabs">
+    <a href="reality.html">
+      <li class="nav-tab active">
+        <div class="tab-img-container">
+          <img src="reality.jpg" alt="Reality">
+        </div>
+        <div class="tab-label">Reality</div>
+      </li>
+    </a>
+    <a href="idealization.html">
+      <li class="nav-tab">
+        <div class="tab-img-container">
+          <img src="idealization.jpg.png" alt="Idealization">
+        </div>
+        <div class="tab-label">Idealization</div>
+      </li>
+    </a>
+    <a href="discretization.html">
+      <li class="nav-tab">
+        <div class="tab-img-container">
+          <img src="discretization.png.jpeg" alt="Discretization">
+        </div>
+        <div class="tab-label">Discretization</div>
+      </li>
+    </a>
+    <a href="geometric.html">
+      <li class="nav-tab">
+        <div class="tab-img-container">
+          <img src="geometry.jpg.png" alt="Geometric">
+        </div>
+        <div class="tab-label">Geometric</div>
+      </li>
+    </a>
+    <a href="algebraic.html">
+      <li class="nav-tab">
+        <div class="tab-img-container">
+          <img src="algebraic.png.jpeg" alt="Algebraic">
+        </div>
+        <div class="tab-label">Algebraic</div>
+      </li>
+    </a>
+  </ul>
+
+  <!-- Right triangle button -->
+  <button class="nav-btn" onclick="location.href='idealization.html'">&#9654;</button>
+</div>
+
+<main class="content-wrap">
+  <section class="left-panel">
+    <h2>Starting with reality</h2>
+    <div class="q-card">
+      <p class="scenario">Two taps receive water at the same pressure. One tap has an outlet radius <strong>twice</strong> that of the other.</p>
+      <div class="q-label">Question</div>
+      <p class="q-text">Which tap will provide a greater flow rate?</p>
+    </div>
+    <div class="q-card">
+      <p class="scenario">A person's artery becomes partially blocked due to cholesterol deposits, <strong>reducing its radius by 20%</strong>.</p>
+      <div class="q-label">Question</div>
+      <p class="q-text">How will this affect the blood flow through the artery? Why can even a small blockage become dangerous?</p>
+    </div>
+  </section>
+
+  <section class="right-panel">
+    <div class="img-row">
+      <div class="img-card">
+        <img src="watweflow.jpg.png" alt="Water tap flow">
+        <div class="img-caption">Flow from a tap</div>
+      </div>
+      <div class="img-card">
+        <img src="bloodflow.jpg.png" alt="Artery cross section illustration">
+        <div class="img-caption">Arterial blood flow</div>
+      </div>
+    </div>
+    <!-- Button removed as requested -->
+  </section>
+</main>
+
+</body>
+</html>

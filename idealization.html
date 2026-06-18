@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Poiseuille's Law — Idealization</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet"/>
+<style>
+  .nav-wrap {
+    background: var(--sky);
+    border-bottom: 2.5px solid var(--sky-deep);
+    padding: 10px 24px;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .nav-btn {
+    background: var(--sky-dark);
+    color: var(--white);
+    border: none;
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    transition: background 0.2s;
+    flex-shrink: 0;
+  }
+  .nav-btn:hover { background: var(--sky-darkest); }
+  .nav-tabs {
+    display: flex;
+    align-items: flex-end;
+    gap: 60px;
+    list-style: none;
+    margin: 0 auto;
+  }
+  .nav-tabs a { text-decoration: none; color: inherit; }
+  .nav-tab {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 0;
+    border-radius: 12px 12px 0 0;
+    cursor: pointer;
+    background: var(--tab-bg);
+    border: 1.5px solid var(--sky-mid);
+    border-bottom: none;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text-muted);
+    min-width: 160px;
+    transition: background 0.2s, color 0.2s;
+    user-select: none;
+    overflow: hidden;
+  }
+  .nav-tab:hover { background: var(--sky-mid); }
+  .nav-tab.active {
+    background: var(--white);
+    border-color: var(--sky-deep);
+    border-bottom: 2.5px solid var(--white);
+    color: var(--sky-darkest);
+    margin-bottom: -2.5px;
+    z-index: 2;
+  }
+  .tab-img-container {
+    width: 100%;
+    height: 100px;
+    background: #d1d5db;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-bottom: 1px solid var(--sky-mid);
+  }
+  .tab-img-container img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+  .tab-label {
+    padding: 12px 10px;
+    text-align: center;
+    width: 100%;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --sky: #e0f4ff;
+    --sky-light: #f0f9ff;
+    --sky-mid: #b3dff5;
+    --sky-deep: #5ab8e8;
+    --sky-dark: #1a7db5;
+    --sky-darkest: #0d5480;
+    --white: #ffffff;
+    --text-main: #0d3d5c;
+    --text-muted: #3a7096;
+    --tab-bg: #cceaf8;
+  }
+
+  html, body {
+    height: 100%;
+    overflow: hidden;
+  }
+
+  body {
+    font-family: 'Nunito', sans-serif;
+    background: var(--sky-light);
+    color: var(--text-main);
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* NAV — see top block */
+
+  /* MAIN — fills remaining height, no scroll */
+  .content-wrap {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 40% 60%;
+    gap: 0;
+    overflow: hidden;
+    padding: 16px 24px 14px;
+    gap: 28px;
+    min-height: 0;
+  }
+
+  /* LEFT PANEL */
+  .left-panel {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 14px;
+    min-height: 0;
+  }
+
+  .left-panel h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 22px; font-weight: 700;
+    color: var(--sky-darkest);
+    border-left: 5px solid var(--sky-deep);
+    padding-left: 12px;
+    flex-shrink: 0;
+  }
+
+  .info-block {
+    background: var(--white);
+    border: 1.5px solid var(--sky-mid);
+    border-left: 5px solid var(--sky-deep);
+    border-radius: 0 12px 12px 0;
+    padding: 16px 18px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 14px;
+    min-height: 0;
+  }
+
+  .info-block p {
+    font-size: 16px;
+    line-height: 1.7;
+    color: var(--text-main);
+    font-weight: 600;
+  }
+
+  .info-block p span {
+    color: var(--sky-darkest);
+    font-weight: 800;
+  }
+
+  /* SLIDER */
+  .slider-wrap {
+    background: var(--sky);
+    border: 1.5px solid var(--sky-mid);
+    border-radius: 12px;
+    padding: 14px 18px;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .slider-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 13px; font-weight: 800;
+    color: var(--sky-darkest);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+  input[type=range] {
+    -webkit-appearance: none;
+    width: 100%; height: 8px;
+    border-radius: 4px;
+    background: linear-gradient(to right, var(--sky-darkest) 0%, var(--sky-darkest) 0%, var(--sky-mid) 0%, var(--sky-mid) 100%);
+    outline: none; cursor: pointer;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 28px; height: 28px; border-radius: 50%;
+    background: var(--sky-darkest);
+    border: 3px solid var(--white);
+    box-shadow: 0 2px 8px rgba(13,84,128,0.35);
+    cursor: grab;
+    transition: transform 0.1s;
+  }
+  input[type=range]::-webkit-slider-thumb:active { cursor: grabbing; transform: scale(1.15); }
+  .slider-hint { text-align: center; font-size: 12px; color: var(--text-muted); font-weight: 600; }
+
+  /* RIGHT PANEL */
+  .right-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    min-height: 0;
+  }
+
+  .viz-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-shrink: 0;
+  }
+  .viz-label {
+    font-size: 12px; font-weight: 800;
+    text-transform: uppercase; letter-spacing: 0.08em;
+    color: var(--white);
+    background: var(--sky-dark);
+    border-radius: 6px;
+    padding: 4px 12px;
+  }
+
+  .canvas-wrap {
+    border-radius: 14px;
+    overflow: hidden;
+    border: 2px solid var(--sky-mid);
+    background: #0a1f35;
+    position: relative;
+    flex: 1;
+    min-height: 0;
+  }
+  canvas#vizCanvas { width: 100%; height: 100%; display: block; }
+
+  .stage-badge {
+    position: absolute;
+    top: 10px; left: 50%;
+    transform: translateX(-50%);
+    background: rgba(255,255,255,0.12);
+    color: #b3e0f7;
+    font-size: 12px; font-weight: 700;
+    padding: 4px 16px;
+    border-radius: 20px;
+    border: 1px solid rgba(179,224,245,0.3);
+    pointer-events: none;
+    white-space: nowrap;
+  }
+
+  .assumptions-bar {
+    background: var(--white);
+    border: 1.5px solid var(--sky-mid);
+    border-radius: 10px;
+    padding: 8px 14px;
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    flex-shrink: 0;
+  }
+  .assumption-tag {
+    font-size: 12px; font-weight: 700;
+    padding: 4px 12px;
+    border-radius: 20px;
+    border: 1.5px solid var(--sky-mid);
+    color: var(--sky-darkest);
+    background: var(--sky);
+    transition: background 0.4s, color 0.4s, border-color 0.4s;
+    opacity: 0.4;
+  }
+  .assumption-tag.active {
+    background: var(--sky-dark);
+    color: var(--white);
+    border-color: var(--sky-dark);
+    opacity: 1;
+  }
+</style>
+</head>
+<body>
+
+<div class="nav-wrap">
+  <button class="nav-btn" onclick="window.location.href='reality.html'">&#9664;</button>
+  <ul class="nav-tabs">
+    <a href="reality.html">
+      <li class="nav-tab">
+        <div class="tab-img-container"><img src="reality.jpg" alt="Reality"></div>
+        <div class="tab-label">Reality</div>
+      </li>
+    </a>
+    <a href="idealization.html">
+      <li class="nav-tab active">
+        <div class="tab-img-container"><img src="idealization.jpg.png" alt="Idealization"></div>
+        <div class="tab-label">Idealization</div>
+      </li>
+    </a>
+    <a href="discretization.html">
+      <li class="nav-tab">
+        <div class="tab-img-container"><img src="discretization.png.jpeg" alt="Discretization"></div>
+        <div class="tab-label">Discretization</div>
+      </li>
+    </a>
+    <a href="geometric.html">
+      <li class="nav-tab">
+        <div class="tab-img-container"><img src="geometry.jpg.png" alt="Geometric"></div>
+        <div class="tab-label">Geometric</div>
+      </li>
+    </a>
+    <a href="algebraic.html">
+      <li class="nav-tab">
+        <div class="tab-img-container"><img src="algebraic.png.jpeg" alt="Algebraic"></div>
+        <div class="tab-label">Algebraic</div>
+      </li>
+    </a>
+  </ul>
+  <button class="nav-btn" onclick="window.location.href='discretization.html'">&#9654;</button>
+</div>
+
+<main class="content-wrap">
+
+  <section class="left-panel">
+    <h2>Idealization</h2>
+
+    <div class="info-block">
+      <p>Here we <span>strip away details</span> we consider unnecessary to solving the problem at hand.</p>
+      <p>And focus on <span>relevant abstractions</span> — replacing the complex biological artery with a simpler system we can describe mathematically.</p>
+    </div>
+
+    <div class="slider-wrap">
+      <div class="slider-labels">
+        <span>⬅ Real</span>
+        <span>Ideal ➡</span>
+      </div>
+      <input type="range" id="morphSlider" min="0" max="100" value="0"/>
+      <div class="slider-hint">Drag to idealise the system</div>
+    </div>
+  </section>
+
+  <section class="right-panel">
+    <div class="viz-header">
+      <span class="viz-label" id="stageLabel">Real Artery</span>
+    </div>
+
+    <div class="canvas-wrap">
+      <canvas id="vizCanvas"></canvas>
+      <div class="stage-badge" id="stageBadge">Drag the slider to begin idealisation →</div>
+    </div>
+
+    <div class="assumptions-bar">
+      <span class="assumption-tag" id="tag1">Straight tube</span>
+      <span class="assumption-tag" id="tag2">Circular cross-section</span>
+      <span class="assumption-tag" id="tag3">Rigid walls</span>
+      <span class="assumption-tag" id="tag4">Uniform radius</span>
+      <span class="assumption-tag" id="tag5">Laminar flow</span>
+    </div>
+  </section>
+
+</main>
+
+<script>
+const canvas = document.getElementById('vizCanvas');
+const ctx = canvas.getContext('2d');
+const slider = document.getElementById('morphSlider');
+const stageLabel = document.getElementById('stageLabel');
+const stageBadge = document.getElementById('stageBadge');
+const tags = [tag1, tag2, tag3, tag4, tag5];
+
+function resize() {
+  const wrap = canvas.parentElement;
+  canvas.width = wrap.clientWidth;
+  canvas.height = wrap.clientHeight;
+}
+
+function noise(x, amp, freq) {
+  return amp * Math.sin(x * freq) + amp * 0.4 * Math.sin(x * freq * 2.3 + 1.2)
+       + amp * 0.2 * Math.sin(x * freq * 5.1 + 2.5);
+}
+
+function lerp(a, b, t) { return a + (b - a) * t; }
+function easeInOut(t) { return t < 0.5 ? 2*t*t : -1+(4-2*t)*t; }
+
+function lerpColor(c1, c2, t) {
+  function parse(c) { return c.match(/[\d.]+/g).map(Number); }
+  const a = parse(c1), b = parse(c2);
+  const r = a.map((v,i) => lerp(v, b[i], t));
+  return `rgba(${Math.round(r[0])},${Math.round(r[1])},${Math.round(r[2])},${r[3].toFixed(2)})`;
+}
+
+function draw(t) {
+  const W = canvas.width, H = canvas.height;
+  const ease = easeInOut(t);
+
+  ctx.clearRect(0, 0, W, H);
+
+  const bg = ctx.createLinearGradient(0, 0, 0, H);
+  bg.addColorStop(0, '#071828');
+  bg.addColorStop(1, '#0d2a42');
+  ctx.fillStyle = bg;
+  ctx.fillRect(0, 0, W, H);
+
+  const cx = W / 2, cy = H / 2;
+  const len = W * 0.80;
+  const startX = cx - len / 2;
+  const endX = cx + len / 2;
+  const idealR = H * 0.28;
+  const steps = 120;
+
+  function getWallOffset(x, isTop) {
+    const norm = (x - startX) / len;
+    const bumpAmp = lerp(idealR * 0.18, 0, ease);
+    const bulge = lerp(Math.sin(norm * Math.PI) * idealR * 0.12, 0, ease);
+    const taper = lerp((1 - Math.pow(Math.abs(norm - 0.5) * 1.6, 2)) * idealR * 0.08, 0, ease);
+    const rawNoise = noise(x * 0.04, bumpAmp, 1);
+    const sign = isTop ? -1 : 1;
+    const asymmetry = isTop ? noise(x * 0.03 + 10, bumpAmp * 0.5, 1.3) : 0;
+    return sign * (idealR + bulge + taper) + rawNoise + asymmetry;
+  }
+
+  const topPts = [], botPts = [];
+  for (let i = 0; i <= steps; i++) {
+    const x = startX + (i / steps) * len;
+    topPts.push({ x, y: cy + getWallOffset(x, true) });
+    botPts.push({ x, y: cy + getWallOffset(x, false) });
+  }
+
+  // outer glow
+  ctx.beginPath();
+  ctx.moveTo(topPts[0].x, topPts[0].y - 18);
+  for (let i = 1; i <= steps; i++) ctx.lineTo(topPts[i].x, topPts[i].y - 18);
+  for (let i = steps; i >= 0; i--) ctx.lineTo(botPts[i].x, botPts[i].y + 18);
+  ctx.closePath();
+  const grad = ctx.createRadialGradient(cx, cy, idealR * 0.6, cx, cy, idealR * 1.6);
+  grad.addColorStop(0, 'rgba(220,100,100,0.0)');
+  grad.addColorStop(0.6, lerpColor('rgba(180,60,60,0.18)', 'rgba(40,120,200,0.15)', ease));
+  grad.addColorStop(1, 'rgba(0,0,0,0.0)');
+  ctx.fillStyle = grad;
+  ctx.fill();
+
+  // wall fill
+  ctx.beginPath();
+  ctx.moveTo(topPts[0].x, topPts[0].y);
+  for (let i = 1; i <= steps; i++) ctx.lineTo(topPts[i].x, topPts[i].y);
+  for (let i = steps; i >= 0; i--) ctx.lineTo(botPts[i].x, botPts[i].y);
+  ctx.closePath();
+  const wallGrad = ctx.createLinearGradient(0, cy - idealR * 1.3, 0, cy + idealR * 1.3);
+  wallGrad.addColorStop(0, lerpColor('rgba(210,80,80,0.95)', 'rgba(90,184,232,0.9)', ease));
+  wallGrad.addColorStop(1, lerpColor('rgba(160,40,40,0.95)', 'rgba(26,125,181,0.9)', ease));
+  ctx.fillStyle = wallGrad;
+  ctx.fill();
+
+  // wall strokes
+  ['top','bot'].forEach(side => {
+    const pts = side === 'top' ? topPts : botPts;
+    ctx.beginPath();
+    ctx.moveTo(pts[0].x, pts[0].y);
+    for (let i = 1; i <= steps; i++) ctx.lineTo(pts[i].x, pts[i].y);
+    ctx.strokeStyle = lerpColor('rgba(255,160,160,0.7)', 'rgba(179,224,245,0.9)', ease);
+    ctx.lineWidth = 2;
+    ctx.stroke();
+  });
+
+  // lumen
+  ctx.beginPath();
+  ctx.moveTo(topPts[0].x, topPts[0].y);
+  for (let i = 1; i <= steps; i++) ctx.lineTo(topPts[i].x, topPts[i].y);
+  for (let i = steps; i >= 0; i--) ctx.lineTo(botPts[i].x, botPts[i].y);
+  ctx.closePath();
+  const lumenGrad = ctx.createLinearGradient(0, cy - idealR, 0, cy + idealR);
+  lumenGrad.addColorStop(0, lerpColor('rgba(80,10,10,0.85)', 'rgba(7,24,40,0.9)', ease));
+  lumenGrad.addColorStop(0.5, lerpColor('rgba(30,4,4,0.9)', 'rgba(4,14,28,0.95)', ease));
+  lumenGrad.addColorStop(1, lerpColor('rgba(80,10,10,0.85)', 'rgba(7,24,40,0.9)', ease));
+  ctx.fillStyle = lumenGrad;
+  ctx.fill();
+
+  // Red blood cells
+  const cellOpacity = Math.max(0, 1 - ease * 2.5);
+  if (cellOpacity > 0.02) {
+    const cells = [
+      {nx:0.12,ny:0},{nx:0.24,ny:-0.28},{nx:0.36,ny:0.22},{nx:0.48,ny:-0.08},
+      {nx:0.58,ny:0.3},{nx:0.70,ny:-0.22},{nx:0.80,ny:0.12},{nx:0.90,ny:-0.18},
+      {nx:0.20,ny:0.18},{nx:0.44,ny:0.38},{nx:0.64,ny:-0.38}
+    ];
+    ctx.globalAlpha = cellOpacity;
+    cells.forEach(({nx, ny}) => {
+      const cx2 = startX + nx * len;
+      const topY = cy + getWallOffset(cx2, true);
+      const botY = cy + getWallOffset(cx2, false);
+      const innerH = (botY - topY) * 0.38;
+      const cellCY = (topY + botY) / 2 + ny * innerH;
+      const rx = lerp(14, 0, ease * 4), ry = lerp(9, 0, ease * 4);
+      if (rx < 1) return;
+      ctx.beginPath();
+      ctx.ellipse(cx2, cellCY, rx, ry, 0, 0, Math.PI * 2);
+      const cg = ctx.createRadialGradient(cx2 - rx*0.3, cellCY - ry*0.3, 0, cx2, cellCY, rx);
+      cg.addColorStop(0, '#ff6060');
+      cg.addColorStop(0.5, '#cc2020');
+      cg.addColorStop(1, '#880000');
+      ctx.fillStyle = cg;
+      ctx.fill();
+      ctx.beginPath();
+      ctx.ellipse(cx2, cellCY, rx*0.4, ry*0.35, 0, 0, Math.PI*2);
+      ctx.fillStyle = 'rgba(80,0,0,0.5)';
+      ctx.fill();
+    });
+    ctx.globalAlpha = 1;
+  }
+
+  // Flow lines
+  const flowOpacity = Math.max(0, ease * 2 - 0.8);
+  if (flowOpacity > 0.02) {
+    ctx.globalAlpha = flowOpacity;
+    const numLines = 7;
+    const time = Date.now() * 0.0008;
+    for (let li = 0; li < numLines; li++) {
+      const frac = (li + 1) / (numLines + 1);
+      const yOff = (frac - 0.5) * 2 * idealR * 0.8;
+      const vel = 1 - Math.pow((frac - 0.5) * 2, 2);
+      const dashOffset = -(time * vel * 120) % 40;
+      ctx.beginPath();
+      ctx.setLineDash([18, 10]);
+      ctx.lineDashOffset = dashOffset;
+      ctx.moveTo(startX + 10, cy + yOff);
+      ctx.lineTo(endX - 10, cy + yOff);
+      ctx.strokeStyle = `rgba(150,220,255,${0.3 + vel * 0.55})`;
+      ctx.lineWidth = 1.2 + vel * 1.2;
+      ctx.stroke();
+    }
+    ctx.setLineDash([]);
+    [0.3, 0.55, 0.8].forEach(nx => {
+      const x = startX + nx * len;
+      ctx.beginPath();
+      ctx.moveTo(x, cy); ctx.lineTo(x - 10, cy - 6); ctx.lineTo(x - 10, cy + 6);
+      ctx.closePath();
+      ctx.fillStyle = `rgba(90,184,232,${flowOpacity * 0.7})`;
+      ctx.fill();
+    });
+    ctx.globalAlpha = 1;
+  }
+
+  // End caps
+  if (ease > 0.3) {
+    const capAlpha = Math.min(1, (ease - 0.3) / 0.4);
+    ctx.globalAlpha = capAlpha * 0.7;
+    [startX, endX].forEach(ex => {
+      ctx.beginPath();
+      ctx.ellipse(ex, cy, 8, idealR, 0, 0, Math.PI * 2);
+      ctx.strokeStyle = 'rgba(179,224,245,0.9)';
+      ctx.lineWidth = 2; ctx.stroke();
+      ctx.fillStyle = 'rgba(26,125,181,0.3)'; ctx.fill();
+    });
+    ctx.globalAlpha = 1;
+  }
+
+  // Radius annotation
+  if (ease > 0.65) {
+    const annoAlpha = (ease - 0.65) / 0.35;
+    ctx.globalAlpha = annoAlpha;
+    const rx = endX - 35;
+    ctx.beginPath(); ctx.moveTo(rx, cy); ctx.lineTo(rx, cy - idealR);
+    ctx.setLineDash([5, 4]);
+    ctx.strokeStyle = 'rgba(179,224,245,0.8)';
+    ctx.lineWidth = 1.5; ctx.stroke(); ctx.setLineDash([]);
+    ctx.beginPath();
+    ctx.moveTo(rx, cy - idealR); ctx.lineTo(rx - 5, cy - idealR + 9); ctx.lineTo(rx + 5, cy - idealR + 9);
+    ctx.closePath(); ctx.fillStyle = 'rgba(179,224,245,0.9)'; ctx.fill();
+    ctx.font = 'bold 15px Nunito, sans-serif';
+    ctx.fillStyle = 'rgba(179,224,245,0.95)';
+    ctx.textAlign = 'left';
+    ctx.fillText('r', rx + 8, cy - idealR / 2 + 5);
+    ctx.globalAlpha = 1;
+  }
+
+  // Bottom label
+  ctx.font = '13px Nunito, sans-serif';
+  ctx.fillStyle = lerpColor('rgba(255,180,180,0.7)', 'rgba(179,224,245,0.8)', ease);
+  ctx.textAlign = 'center';
+  ctx.fillText(
+    ease < 0.15 ? 'Real artery — complex, irregular walls'
+    : ease < 0.45 ? 'Simplifying…'
+    : ease < 0.75 ? 'Removing biological complexity…'
+    : 'Ideal cylinder — uniform radius, rigid walls',
+    cx, H - 12
+  );
+}
+
+function updateUI(t) {
+  if (t < 0.2) stageLabel.textContent = 'Real Artery';
+  else if (t < 0.5) stageLabel.textContent = 'Simplifying…';
+  else if (t < 0.8) stageLabel.textContent = 'Near Ideal';
+  else stageLabel.textContent = 'Ideal Cylinder';
+
+  if (t === 0) stageBadge.textContent = 'Drag the slider to begin idealisation →';
+  else if (t < 0.5) stageBadge.textContent = 'Stripping away biological complexity…';
+  else if (t < 0.9) stageBadge.textContent = 'Converging to a perfect rigid cylinder…';
+  else stageBadge.textContent = 'Idealisation complete ✓';
+
+  [0.2, 0.35, 0.5, 0.65, 0.8].forEach((thresh, i) => {
+    tags[i].classList.toggle('active', t >= thresh);
+  });
+
+  slider.style.background = `linear-gradient(to right, var(--sky-darkest) 0%, var(--sky-darkest) ${t*100}%, var(--sky-mid) ${t*100}%, var(--sky-mid) 100%)`;
+}
+
+slider.addEventListener('input', () => updateUI(+slider.value / 100));
+
+function animate() {
+  draw(+slider.value / 100);
+  requestAnimationFrame(animate);
+}
+
+window.addEventListener('resize', () => { resize(); });
+resize();
+updateUI(0);
+animate();
+</script>
+</body>
+</html>

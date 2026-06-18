@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Poiseuille's Law — Geometric</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet"/>
+<style>
+  .nav-wrap {
+  background: var(--sky);
+  border-bottom: 2.5px solid var(--sky-deep);
+  padding: 0 24px;
+  flex-shrink: 0;
+}
+
+.nav-tabs {
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+  list-style: none;
+}
+
+.nav-tab {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  padding: 8px 14px;
+  border-radius: 12px 12px 0 0;
+  cursor: pointer;
+  background: var(--tab-bg);
+  border: 1.5px solid var(--sky-mid);
+  border-bottom: none;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-muted);
+  min-width: 90px;
+}
+
+.nav-tab.active {
+  background: var(--white);
+  border-color: var(--sky-deep);
+  border-bottom: 2.5px solid var(--white);
+  color: var(--sky-darkest);
+  margin-bottom: -2.5px;
+  z-index: 2;
+}
+
+.tab-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--sky-deep);
+  border: 2px solid var(--sky-dark);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+}
+
+.nav-tab.active .tab-icon {
+  background: var(--sky-darkest);
+  border-color: var(--sky-mid);
+}
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --sky: #e0f4ff; --sky-light: #f0f9ff; --sky-mid: #b3dff5;
+    --sky-deep: #5ab8e8; --sky-dark: #1a7db5; --sky-darkest: #0d5480;
+    --white: #ffffff; --text-main: #0d3d5c; --text-muted: #3a7096;
+    --tab-bg: #cceaf8;
+  }
+  html, body { height: 100%; overflow: hidden; }
+  body {
+    font-family: 'Nunito', sans-serif;
+    background: var(--sky-light);
+    color: var(--text-main);
+    display: flex; flex-direction: column;
+  }
+
+  .nav-wrap {
+    background: var(--sky);
+    border-bottom: 2.5px solid var(--sky-deep);
+    padding: 10px 24px;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .nav-btn {
+    background: var(--sky-dark);
+    color: var(--white);
+    border: none;
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    transition: background 0.2s;
+    flex-shrink: 0;
+  }
+  .nav-btn:hover { background: var(--sky-darkest); }
+  .nav-tabs { display: flex; align-items: flex-end; gap: 60px; list-style: none; margin: 0 auto; }
+  .nav-tabs a { text-decoration: none; color: inherit; }
+  .nav-tab {
+    display: flex; flex-direction: column; align-items: center; padding: 0;
+    border-radius: 12px 12px 0 0; cursor: pointer;
+    background: var(--tab-bg); border: 1.5px solid var(--sky-mid); border-bottom: none;
+    font-size: 16px; font-weight: 700; color: var(--text-muted); min-width: 160px;
+    transition: background 0.2s, color 0.2s; user-select: none; overflow: hidden;
+  }
+  .nav-tab:hover { background: var(--sky-mid); }
+  .nav-tab.active {
+    background: var(--white); border-color: var(--sky-deep);
+    border-bottom: 2.5px solid var(--white); color: var(--sky-darkest);
+    margin-bottom: -2.5px; z-index: 2;
+  }
+  .tab-img-container {
+    width: 100%; height: 100px; background: #d1d5db;
+    display: flex; align-items: center; justify-content: center;
+    border-bottom: 1px solid var(--sky-mid);
+  }
+  .tab-img-container img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .tab-label { padding: 12px 10px; text-align: center; width: 100%; }
+
+  .content-wrap {
+    flex: 1; display: grid; grid-template-columns: 40% 60%;
+    overflow: hidden; padding: 14px 24px 12px; gap: 24px; min-height: 0;
+  }
+
+  /* LEFT — math steps */
+  .left-panel { display: flex; flex-direction: column; gap: 8px; min-height: 0; }
+  .left-panel h2 {
+    font-family: 'Playfair Display', serif; font-size: 22px; font-weight: 700;
+    color: var(--sky-darkest); border-left: 5px solid var(--sky-deep);
+    padding-left: 12px; flex-shrink: 0;
+  }
+
+  .steps-container { display: flex; flex-direction: column; gap: 7px; flex: 1; min-height: 0; }
+
+  .step-card {
+    background: var(--white);
+    border: 1.5px solid var(--sky-mid);
+    border-left: 5px solid var(--sky-mid);
+    border-radius: 0 10px 10px 0;
+    padding: 10px 16px;
+    cursor: pointer;
+    transition: all 0.22s;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 4px;
+    min-height: 0;
+  }
+  .step-card:hover { border-left-color: var(--sky-deep); box-shadow: 0 2px 10px rgba(90,184,232,0.15); }
+  .step-card.active {
+    border-left-color: var(--sky-darkest);
+    background: var(--sky);
+    box-shadow: 0 3px 14px rgba(13,84,128,0.12);
+  }
+  .step-card .step-num {
+    font-size: 10px; font-weight: 800; text-transform: uppercase;
+    letter-spacing: 0.08em; color: var(--sky-dark);
+  }
+  .step-card.active .step-num { color: var(--sky-darkest); }
+
+  /* Math rendered via canvas inside each card */
+  .math-display {
+    font-size: 20px;
+    font-family: 'Georgia', 'Times New Roman', serif;
+    color: var(--sky-darkest);
+    line-height: 1.5;
+    text-align: center;
+    padding: 4px 0;
+  }
+  .math-display .frac {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    vertical-align: middle;
+    font-size: 0.82em;
+    margin: 0 2px;
+  }
+  .math-display .frac .num { border-bottom: 1.5px solid currentColor; padding: 0 3px; }
+  .math-display .frac .den { padding: 0 3px; }
+  .math-display sub { font-size: 0.65em; }
+  .math-display sup { font-size: 0.65em; }
+  .math-display .arrow { color: var(--sky-dark); font-size: 0.85em; margin: 0 6px; }
+
+  /* RIGHT */
+  .right-panel { display: flex; flex-direction: column; gap: 8px; min-height: 0; }
+  .canvas-wrap {
+    border-radius: 14px; overflow: hidden; border: 2px solid var(--sky-mid);
+    background: #f8fbff; flex: 1; min-height: 0; position: relative;
+  }
+  canvas { width: 100%; height: 100%; display: block; }
+  .fig-label {
+    position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%);
+    background: rgba(13,84,128,0.75); color: #e0f4ff;
+    font-size: 12px; font-weight: 700; padding: 4px 14px; border-radius: 20px;
+    pointer-events: none; white-space: nowrap;
+  }
+</style>
+</head>
+<body>
+
+<div class="nav-wrap">
+  <button class="nav-btn" onclick="window.location.href='discretization.html'">&#9664;</button>
+  <ul class="nav-tabs">
+    <a href="reality.html">
+      <li class="nav-tab">
+        <div class="tab-img-container"><img src="reality.jpg" alt="Reality"></div>
+        <div class="tab-label">Reality</div>
+      </li>
+    </a>
+    <a href="idealization.html">
+      <li class="nav-tab">
+        <div class="tab-img-container"><img src="idealization.jpg.png" alt="Idealization"></div>
+        <div class="tab-label">Idealization</div>
+      </li>
+    </a>
+    <a href="discretization.html">
+      <li class="nav-tab">
+        <div class="tab-img-container"><img src="discretization.png.jpeg" alt="Discretization"></div>
+        <div class="tab-label">Discretization</div>
+      </li>
+    </a>
+    <a href="geometric.html">
+      <li class="nav-tab active">
+        <div class="tab-img-container"><img src="geometry.jpg.png" alt="Geometric"></div>
+        <div class="tab-label">Geometric</div>
+      </li>
+    </a>
+    <a href="algebraic.html">
+      <li class="nav-tab">
+        <div class="tab-img-container"><img src="algebraic.png.jpeg" alt="Algebraic"></div>
+        <div class="tab-label">Algebraic</div>
+      </li>
+    </a>
+  </ul>
+  <button class="nav-btn" onclick="window.location.href='algebraic.html'">&#9654;</button>
+</div>
+
+<main class="content-wrap">
+
+  <section class="left-panel">
+    <h2>Geometry</h2>
+    <div class="steps-container">
+
+      <!-- Step 1 -->
+      <div class="step-card active" onclick="setStep(0)">
+        <div class="step-num">Step 1 — Force balance</div>
+        <div class="math-display">
+          (p<sub>1</sub> &minus; p<sub>2</sub>)&thinsp;&pi;r<sup>2</sup> &minus; &tau;&thinsp;2&pi;rL = 0
+        </div>
+      </div>
+
+      <!-- Step 2 -->
+      <div class="step-card" onclick="setStep(1)">
+        <div class="step-num">Step 2 — Simplify</div>
+        <div class="math-display">
+          &Delta;p&thinsp;&pi;r<sup>2</sup> = &tau;&thinsp;2&pi;rL
+        </div>
+      </div>
+
+      <!-- Step 3 -->
+      <div class="step-card" onclick="setStep(2)">
+        <div class="step-num">Step 3 — Solve for &tau;</div>
+        <div class="math-display">
+          &tau; =
+          <span class="frac">
+            <span class="num">&Delta;p &middot; r</span>
+            <span class="den">2L</span>
+          </span>
+        </div>
+      </div>
+
+      <!-- Step 4 -->
+      <div class="step-card" onclick="setStep(3)">
+        <div class="step-num">Step 4 — Newton's viscosity law</div>
+        <div class="math-display">
+          &tau; = &mu;
+          <span class="frac">
+            <span class="num">du</span>
+            <span class="den">dr</span>
+          </span>
+          <span class="arrow">&there4;</span>
+          <span class="frac">
+            <span class="num">du</span>
+            <span class="den">dr</span>
+          </span>
+          = &minus;
+          <span class="frac">
+            <span class="num">&Delta;p &middot; r</span>
+            <span class="den">2&mu;L</span>
+          </span>
+        </div>
+      </div>
+
+      <!-- Step 5 -->
+      <div class="step-card" onclick="setStep(4)">
+        <div class="step-num">Step 5 — Velocity profile</div>
+        <div class="math-display">
+          u(r) =
+          <span class="frac">
+            <span class="num">&Delta;p</span>
+            <span class="den">4&mu;L</span>
+          </span>
+          (R<sup>2</sup> &minus; r<sup>2</sup>)
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <section class="right-panel">
+    <div class="canvas-wrap">
+      <canvas id="vizCanvas"></canvas>
+      <div class="fig-label" id="figLabel">Step 1 — Free-body diagram</div>
+    </div>
+  </section>
+
+</main>
+
+<script>
+const canvas = document.getElementById('vizCanvas');
+const ctx = canvas.getContext('2d');
+const figLabel = document.getElementById('figLabel');
+let currentStep = 0;
+let animT = 0, lastTime = 0;
+
+const figLabels = [
+  'Step 1 — Pressure & shear forces on fluid element',
+  'Step 2 — ΔP·πr² = τ·2πrL',
+  'Step 3 — Shear stress linear in r',
+  'Step 4 — Velocity gradient du/dr',
+  'Step 5 — Parabolic velocity profile u(r)'
+];
+
+function setStep(i) {
+  currentStep = i; animT = 0;
+  figLabel.textContent = figLabels[i];
+  document.querySelectorAll('.step-card').forEach((c,j) => c.classList.toggle('active', i===j));
+}
+
+function resize() {
+  const w = canvas.parentElement;
+  canvas.width = w.clientWidth;
+  canvas.height = w.clientHeight;
+}
+
+function lerp(a,b,t){ return a+(b-a)*t; }
+function easeOut(t){ return 1-(1-t)*(1-t); }
+
+function getCyl() {
+  const W=canvas.width, H=canvas.height;
+  const cx=W*0.48, cy=H*0.46;
+  const R=H*0.18, r=R*0.6, len=W*0.56, ex=len*0.06;
+  return {W,H,cx,cy,R,r,len,ex};
+}
+
+function bg() {
+  const {W,H}=getCyl();
+  ctx.clearRect(0,0,W,H);
+  ctx.fillStyle='#f8fbff'; ctx.fillRect(0,0,W,H);
+}
+
+function pipe(alpha=0.18) {
+  const {cx,cy,R,len,ex}=getCyl();
+  ctx.globalAlpha=alpha;
+  ctx.beginPath(); ctx.rect(cx-len/2, cy-R, len, R*2);
+  ctx.fillStyle='#deeefa'; ctx.fill();
+  ctx.beginPath();
+  ctx.moveTo(cx-len/2,cy-R); ctx.lineTo(cx+len/2,cy-R);
+  ctx.moveTo(cx-len/2,cy+R); ctx.lineTo(cx+len/2,cy+R);
+  ctx.strokeStyle='#5ab8e8'; ctx.lineWidth=3; ctx.stroke();
+  [cx-len/2,cx+len/2].forEach(x=>{
+    ctx.beginPath(); ctx.ellipse(x,cy,ex,R,0,0,Math.PI*2);
+    ctx.strokeStyle='#5ab8e8'; ctx.lineWidth=2; ctx.stroke();
+    ctx.fillStyle='rgba(180,220,245,0.4)'; ctx.fill();
+  });
+  ctx.globalAlpha=1;
+}
+
+function fluid(alpha=1) {
+  const {cx,cy,r,len,ex}=getCyl();
+  ctx.globalAlpha=alpha;
+  const g=ctx.createLinearGradient(0,cy-r,0,cy+r);
+  g.addColorStop(0,'rgba(90,184,232,0.35)');
+  g.addColorStop(0.5,'rgba(90,184,232,0.18)');
+  g.addColorStop(1,'rgba(90,184,232,0.35)');
+  ctx.beginPath(); ctx.rect(cx-len/2,cy-r,len,r*2);
+  ctx.fillStyle=g; ctx.fill();
+  ctx.beginPath();
+  ctx.moveTo(cx-len/2,cy-r); ctx.lineTo(cx+len/2,cy-r);
+  ctx.moveTo(cx-len/2,cy+r); ctx.lineTo(cx+len/2,cy+r);
+  ctx.strokeStyle='#1a7db5'; ctx.lineWidth=2; ctx.stroke();
+  [cx-len/2,cx+len/2].forEach(x=>{
+    ctx.beginPath(); ctx.ellipse(x,cy,ex*0.55,r,0,0,Math.PI*2);
+    ctx.strokeStyle='#1a7db5'; ctx.lineWidth=1.8; ctx.stroke();
+    ctx.fillStyle='rgba(90,184,232,0.22)'; ctx.fill();
+  });
+  ctx.globalAlpha=1;
+}
+
+function arrow(x1,y1,x2,y2,color,lw=2.5) {
+  ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2);
+  ctx.strokeStyle=color; ctx.lineWidth=lw; ctx.stroke();
+  const ang=Math.atan2(y2-y1,x2-x1);
+  const s=8;
+  ctx.beginPath();
+  ctx.moveTo(x2,y2);
+  ctx.lineTo(x2-s*Math.cos(ang-0.4),y2-s*Math.sin(ang-0.4));
+  ctx.lineTo(x2-s*Math.cos(ang+0.4),y2-s*Math.sin(ang+0.4));
+  ctx.closePath(); ctx.fillStyle=color; ctx.fill();
+}
+
+function dimLabel(text, x, y, color='#0d5480', size=13) {
+  ctx.font=`bold ${size}px Georgia,serif`;
+  ctx.fillStyle=color; ctx.textAlign='center';
+  ctx.fillText(text,x,y);
+}
+
+function eqBox(text, x, y, w=280, h=40) {
+  ctx.fillStyle='rgba(255,255,255,0.9)';
+  ctx.strokeStyle='#5ab8e8';
+  ctx.lineWidth=1.5;
+  ctx.beginPath();
+  ctx.roundRect(x-w/2, y-h/2, w, h, 8);
+  ctx.fill(); ctx.stroke();
+  ctx.font='bold 16px Nunito,sans-serif';
+  ctx.fillStyle='#0d5480';
+  ctx.textAlign='center';
+  ctx.fillText(text, x, y+6);
+}
+
+function drawStep0(t) {
+  bg(); pipe(0.2); fluid(0.9);
+  const {cx,cy,r,len,ex}=getCyl();
+  const e=easeOut(Math.min(1,t*1.5));
+
+  // Pressure arrows
+  const aL=44*e;
+  arrow(cx-len/2-aL-10, cy, cx-len/2-6, cy, '#c43010', 3);
+  arrow(cx+len/2+aL+10, cy, cx+len/2+6, cy, '#c43010', 3);
+  dimLabel('p₁', cx-len/2-aL-24, cy+5, '#c43010', 16);
+  dimLabel('p₂', cx+len/2+aL+24, cy+5, '#c43010', 16);
+
+  // Shear stress arrows
+  for(let i=0;i<5;i++){
+    const x=cx-len/2+(i+0.5)/5*len;
+    arrow(x, cy-r-6, x-20*e, cy-r-6, '#d47010', 2);
+    arrow(x, cy+r+6, x-20*e, cy+r+6, '#d47010', 2);
+  }
+  dimLabel('τ (shear)', cx, cy-r-24, '#d47010', 14);
+
+  // Labels for geometry
+  ctx.setLineDash([3,3]);
+  ctx.beginPath(); ctx.moveTo(cx-len/2, cy+r+25); ctx.lineTo(cx+len/2, cy+r+25);
+  ctx.strokeStyle='#3a7096'; ctx.lineWidth=1; ctx.stroke();
+  ctx.setLineDash([]);
+  dimLabel('Length L', cx, cy+r+42, '#3a7096', 13);
+}
+
+// ── STEP 1 ── Simplified equation shown
+function drawStep1(t) {
+  bg(); pipe(0.15); fluid(0.7);
+  const {cx,cy,r,len,W,H}=getCyl();
+  const e=easeOut(Math.min(1,t*1.5));
+
+  // cancel πr terms visually — show reduction
+  const aL=40*e;
+  arrow(cx-len/2-aL-6,cy,cx-len/2-4,cy,'#c43010',2.5);
+  arrow(cx+len/2+aL+6,cy,cx+len/2+4,cy,'#c43010',2.5);
+  for(let i=0;i<6;i++){
+    const x=cx-len/2+(i+0.5)/6*len;
+    arrow(x,cy-r-5,x-16*e,cy-r-5,'#d47010',1.8);
+    arrow(x,cy+r+5,x-16*e,cy+r+5,'#d47010',1.8);
+  }
+
+  // Main equation box
+  ctx.globalAlpha=e;
+  eqBox('Δp · πr²  =  τ · 2πrL', cx, cy+r+54, 310, 38);
+
+  // cancellation note
+  ctx.font='13px Georgia,serif'; ctx.fillStyle='#3a7096'; ctx.textAlign='center';
+  ctx.fillText('Divide both sides by 2πrL', cx, cy+r+94*e);
+  ctx.globalAlpha=1;
+}
+
+// ── STEP 2 ── τ = ΔP·r / 2L  with linear profile
+function drawStep2(t) {
+  bg(); pipe(0.15); fluid(0.5);
+  const {cx,cy,r,R,len,W,H}=getCyl();
+  const e=easeOut(Math.min(1,t*1.5));
+
+  eqBox('τ  =  Δp · r / 2L', cx, cy-r-52, 240, 36);
+
+  // shear profile on right side (linear triangle)
+  const px=cx+len/2+44, maxT=H*0.14*e;
+  ctx.globalAlpha=e;
+  // axes
+  arrow(px,cy+R+8, px,cy-R-14,'#0d5480',1.8);
+  arrow(px,cy+R+8, px+maxT+18,cy+R+8,'#0d5480',1.8);
+  dimLabel('r', px-10, cy-R-14,'#0d5480',12);
+  dimLabel('τ', px+maxT+20, cy+R+14,'#0d5480',12);
+
+  // linear line top half
+  ctx.beginPath(); ctx.moveTo(px,cy); ctx.lineTo(px+maxT,cy-R);
+  ctx.strokeStyle='#d47010'; ctx.lineWidth=2.5; ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(px,cy); ctx.lineTo(px+maxT,cy+R);
+  ctx.strokeStyle='#d47010'; ctx.lineWidth=2.5; ctx.stroke();
+
+  // fill triangle
+  ctx.beginPath();
+  ctx.moveTo(px,cy-R); ctx.lineTo(px,cy+R); ctx.lineTo(px+maxT,cy+R);
+  ctx.fillStyle='rgba(212,112,16,0.1)'; ctx.fill();
+  ctx.beginPath();
+  ctx.moveTo(px,cy-R); ctx.lineTo(px+maxT,cy-R); ctx.lineTo(px,cy);
+  ctx.fillStyle='rgba(212,112,16,0.1)'; ctx.fill();
+
+  dimLabel('0', px+6, cy+4,'#d47010',11);
+  dimLabel('τ_max', px+maxT+4, cy-R+14,'#d47010',11);
+  ctx.globalAlpha=1;
+
+  // r & R labels on cylinder
+  ctx.setLineDash([4,3]);
+  ctx.beginPath(); ctx.moveTo(cx+len/2+10,cy); ctx.lineTo(cx+len/2+22,cy);
+  ctx.strokeStyle='#5ab8e8'; ctx.lineWidth=1.2; ctx.stroke();
+  ctx.setLineDash([]);
+}
+
+// ── STEP 3 ── du/dr = −ΔP·r / 2μL
+function drawStep3(t) {
+  bg(); pipe(0.15); fluid(0.45);
+  const {cx,cy,r,R,len,W,H}=getCyl();
+  const e=easeOut(Math.min(1,t*1.5));
+
+  eqBox('du/dr  =  − Δp · r / 2μL', cx, cy-r-52, 300, 36);
+
+  // velocity gradient arrows (du/dr shown as slope)
+  const N=7;
+  ctx.globalAlpha=e;
+  for(let i=0;i<N;i++){
+    const frac=(i+0.5)/N;
+    const x=cx-len/2+frac*len;
+    const rv=Math.abs((frac-0.5)*2)*r;
+    const vel=(1-Math.pow(rv/r,2));
+    const aLen=(vel*36+4)*e;
+    const col=`rgba(26,125,181,${0.5+vel*0.45})`;
+    arrow(x,cy,x+aLen,cy,col,1.8+vel*1.2);
+  }
+
+  // du/dr slope indicator
+  const sx=cx+len/2+30, sy=cy;
+  ctx.beginPath(); ctx.moveTo(sx,sy-r*0.5); ctx.lineTo(sx,sy+r*0.5);
+  ctx.strokeStyle='#1a7db5'; ctx.lineWidth=1.5;
+  ctx.setLineDash([4,3]); ctx.stroke(); ctx.setLineDash([]);
+  dimLabel('du/dr', sx+28, sy+4,'#1a7db5',12);
+  ctx.globalAlpha=1;
+}
+
+// ── STEP 4 ── u(r) = ΔP(R²-r²)/4μL  parabola
+function drawStep4(t) {
+  bg(); pipe(0.15);
+  const {cx,cy,r,R,len,W,H}=getCyl();
+  const e=easeOut(Math.min(1,t*1.5));
+
+  // coloured shell layers (parabolic colours)
+  const N=14;
+  for(let i=N;i>=1;i--){
+    const ri=(i/N)*r, ri2=((i-1)/N)*r;
+    const vel=1-Math.pow(ri/r,2);
+    const hue=lerp(200,20,1-vel);
+    ctx.beginPath(); ctx.rect(cx-len/2,cy-ri,len,ri-ri2);
+    ctx.fillStyle=`hsla(${hue},75%,55%,0.55)`; ctx.fill();
+    ctx.beginPath(); ctx.rect(cx-len/2,cy+ri2,len,ri-ri2);
+    ctx.fillStyle=`hsla(${hue},75%,55%,0.55)`; ctx.fill();
+  }
+
+  // fluid outline
+  fluid(0.15);
+
+  // parabola on right
+  const px=cx+len/2+38, maxU=W*0.1*e;
+  ctx.globalAlpha=e;
+  arrow(px,cy+R+8,px,cy-R-14,'#0d5480',1.8);
+  arrow(px,cy,px+maxU+18,cy,'#0d5480',1.8);
+  dimLabel('r', px-10,cy-R-14,'#0d5480',12);
+  dimLabel('u', px+maxU+22,cy+4,'#0d5480',12);
+
+  // parabola curve
+  ctx.beginPath();
+  for(let i=0;i<=60;i++){
+    const frac=i/60;
+    const rv=(frac-0.5)*2*R;
+    const u=e*(1-Math.pow(rv/R,2))*maxU;
+    const x=px+u, y=cy+rv;
+    i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+  }
+  ctx.strokeStyle='rgba(255,170,0,0.95)'; ctx.lineWidth=2.5; ctx.stroke();
+
+  // velocity arrows inside cylinder
+  for(let i=0;i<7;i++){
+    const frac=(i+0.5)/7;
+    const x=cx-len/2+frac*len;
+    const rv=Math.abs((i-3)/3)*r;
+    const vel=(1-Math.pow(rv/r,2));
+    const al=vel*34*e;
+    const hue=lerp(200,20,1-vel);
+    arrow(x,cy,x+al,cy,`hsl(${hue},80%,45%)`,1.8+vel*1.2);
+  }
+
+  dimLabel('u_max', px+maxU+4, cy-12,'rgba(255,170,0,0.9)',11);
+  dimLabel('0 at wall', px+4, cy-R+14,'rgba(255,170,0,0.8)',11);
+
+  // equation box
+  eqBox('u(r) = (Δp/4μL)(R² − r²)', cx, cy+r+52, 320, 38);
+  ctx.globalAlpha=1;
+}
+
+const drawFns=[drawStep0,drawStep1,drawStep2,drawStep3,drawStep4];
+
+function animate(time){
+  const dt=Math.min((time-lastTime)/1000,0.05);
+  lastTime=time;
+  animT=Math.min(animT+dt,2);
+  drawFns[currentStep](animT);
+  requestAnimationFrame(animate);
+}
+
+window.addEventListener('resize',()=>{resize();animT=0;});
+resize();
+requestAnimationFrame(animate);
+</script>
+</body>
+</html>
