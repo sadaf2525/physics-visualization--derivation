@@ -1,0 +1,398 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Poiseuille's Law — Overview</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700&family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=Space+Grotesk:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+:root{
+  --ink:#0a1628;
+  --cream:#f0f8ff;
+  --cream2:#e0f0fb;
+  --sky:#87ceeb;
+  --sky2:#4ba3c7;
+  --sky3:#b8e4f7;
+  --white:#ffffff;
+  --muted:#4a7a99;
+  --accent:#1a6fa0;
+  --light-blue:#d0eaf8;
+}
+
+html,body{height:100%;background:var(--white);font-family:'Space Grotesk',sans-serif;color:var(--ink);}
+
+body::before{
+  content:'';position:fixed;inset:0;z-index:0;pointer-events:none;opacity:0.03;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size:200px;
+}
+
+.top-rule{
+  position:fixed;top:0;left:0;right:0;z-index:50;height:3px;
+  background:linear-gradient(90deg,var(--ink) 0%,var(--sky2) 40%,var(--sky) 60%,var(--sky3) 100%);
+}
+
+.page{
+  position:relative;z-index:10;
+  min-height:100vh;
+  display:grid;
+  grid-template-columns:60fr 40fr;
+  padding-top:3px;
+}
+
+/* LEFT PANEL */
+.left-panel{
+  position:relative;
+  background:var(--cream2);
+  display:flex;align-items:center;justify-content:center;
+  padding:60px;
+  overflow:auto;
+}
+
+.left-panel::after{
+  content:'';position:absolute;top:0;right:0;bottom:0;width:1px;
+  background:linear-gradient(to bottom,transparent,rgba(135,206,235,0.3) 30%,rgba(74,163,199,0.3) 70%,transparent);
+}
+
+.cards-wrap{
+  position:relative;
+  width:700px;
+  height:760px;
+}
+
+.step-card{
+  position:absolute;
+  background:var(--white);
+  border-radius:12px;
+  border:1.5px solid var(--sky3);
+  box-shadow:0 4px 20px rgba(74,163,199,0.12),0 1px 4px rgba(74,163,199,0.08);
+  padding:14px 16px 13px;
+  width:300px;
+  opacity:0;
+  transform:translateY(16px);
+  transition:box-shadow 0.2s,transform 0.18s;
+}
+
+.step-card:hover{
+  box-shadow:0 10px 40px rgba(74,163,199,0.25),0 2px 8px rgba(74,163,199,0.12);
+  transform:translateY(-4px) !important;
+  z-index:30 !important;
+  border-color:var(--sky2);
+}
+
+.step-card:nth-child(1){animation:cardIn 0.45s ease-out 0.35s forwards;}
+.step-card:nth-child(2){animation:cardIn 0.45s ease-out 0.50s forwards;}
+.step-card:nth-child(3){animation:cardIn 0.45s ease-out 0.65s forwards;}
+.step-card:nth-child(4){animation:cardIn 0.45s ease-out 0.80s forwards;}
+.step-card:nth-child(5){animation:cardIn 0.45s ease-out 0.95s forwards;}
+
+.step-card:nth-child(1){top:15px;   left:70px;   z-index:5;}
+.step-card:nth-child(2){top:140px;  left:140px;  z-index:6;}
+.step-card:nth-child(3){top:280px;  left:230px;  z-index:7;}
+.step-card:nth-child(4){top:420px;  left:310px;  z-index:8;}
+.step-card:nth-child(5){top:560px;  left:420px;  z-index:9;}
+
+.card-label{
+  font-family:'Space Grotesk',sans-serif;
+  font-size:8px;font-weight:600;
+  letter-spacing:2.5px;text-transform:uppercase;
+  color:var(--sky2);margin-bottom:9px;
+}
+
+.card-visual{
+  border-radius:7px;
+  overflow:hidden;
+  background:var(--light-blue);
+  height:140px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+
+.card-visual img{
+  width:100%;height:100%;
+  object-fit:contain;object-position:center;
+  display:block;padding:12px;
+}
+
+.alg-card .card-visual{
+  background:var(--accent);
+  height:80px;
+}
+
+.alg-eq{
+  font-family:'Georgia',serif;
+  font-size:20px;
+  color:#fff;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:10px;
+  white-space:nowrap;
+}
+
+.frac{
+  display:inline-flex;flex-direction:column;
+  align-items:center;vertical-align:middle;
+}
+.frac .num,.frac .den{font-size:11px;line-height:1.15;}
+.frac-bar{width:100%;height:1px;background:#fff;margin:2px 0;}
+
+/* RIGHT PANEL */
+.right-panel{
+  display:flex;flex-direction:column;justify-content:center;
+  padding:90px 52px 48px 56px;
+  background:var(--white);
+  opacity:0;animation:fadeUp 0.6s ease-out 0.2s forwards;
+  position:relative;
+  overflow:hidden;
+}
+
+.right-panel > *{position:relative;z-index:2;}
+
+.right-panel::before{
+  content:'';
+  position:absolute;inset:0;
+  background:
+    radial-gradient(ellipse 80% 60% at 110% 80%, rgba(135,206,235,0.35) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 40% at 90% 20%, rgba(176,224,230,0.25) 0%, transparent 50%);
+  pointer-events:none;z-index:0;
+}
+
+.right-panel::after{
+  content:'';
+  position:absolute;
+  bottom:-40px;right:-40px;
+  width:320px;height:320px;
+  border-radius:50%;
+  background:radial-gradient(circle, rgba(135,206,235,0.18) 0%, transparent 70%);
+  pointer-events:none;z-index:0;
+}
+
+.tube-deco{
+  position:absolute;
+  top:0;right:0;bottom:0;
+  width:45%;
+  display:flex;align-items:center;justify-content:center;
+  z-index:1;
+  pointer-events:none;
+}
+
+.tube-svg{
+  width:180px;height:280px;
+  opacity:0.18;
+}
+
+.main-heading{
+  font-family:'Playfair Display',serif;
+  font-size:clamp(2.4rem,4.5vw,4.2rem);
+  font-weight:900;line-height:0.93;
+  color:var(--ink);
+  margin-bottom:10px;
+  letter-spacing:-0.5px;
+}
+
+.main-heading em{
+  font-style:italic;font-weight:400;
+  color:var(--sky2);
+  display:block;font-size:0.72em;line-height:1.15;
+}
+
+.rule-line{
+  display:flex;align-items:center;gap:12px;
+  margin:22px 0;
+}
+.rule-line::before{content:'';flex:0 0 36px;height:2px;background:var(--ink);}
+.rule-line::after{content:'';flex:0 0 7px;height:7px;background:var(--sky2);border-radius:50%;}
+
+.lead-text{
+  font-family:'Cormorant Garamond',serif;
+  font-style:italic;font-size:1.15rem;
+  color:var(--muted);line-height:1.85;
+  max-width:320px;margin-bottom:38px;
+}
+
+.start-btn{
+  display:inline-flex;align-items:center;gap:12px;
+  background:var(--ink);color:var(--white);
+  font-family:'Space Grotesk',sans-serif;font-size:10.5px;font-weight:600;
+  letter-spacing:2.5px;text-transform:uppercase;text-decoration:none;
+  padding:15px 30px;border-radius:2px;
+  width:fit-content;
+  transition:all 0.25s;
+  position:relative;overflow:hidden;
+}
+.start-btn::before{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(135deg,var(--sky2),var(--accent));
+  opacity:0;transition:opacity 0.25s;
+}
+.start-btn:hover::before{opacity:1;}
+.start-btn:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(74,163,199,0.35);}
+.start-btn span{position:relative;z-index:1;display:flex;align-items:center;gap:12px;}
+.arrow{font-size:15px;transition:transform 0.2s;}
+.start-btn:hover .arrow{transform:translateX(5px);}
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+@keyframes cardIn{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+
+@media (max-width:900px){
+  .page{grid-template-columns:1fr;}
+  .left-panel{min-height:800px;}
+  .right-panel{padding:40px 20px;}
+}
+</style>
+</head>
+<body>
+<div class="top-rule"></div>
+<div class="page">
+
+  <!-- LEFT: staircase cards -->
+  <div class="left-panel">
+    <div class="cards-wrap">
+
+      <div class="step-card">
+        <div class="card-label">Reality</div>
+        <div class="card-visual">
+          <img src="reality.jpg" alt="Reality">
+        </div>
+      </div>
+
+      <div class="step-card">
+        <div class="card-label">Idealization</div>
+        <div class="card-visual">
+          <img src="idealization.jpg.png" alt="Idealization">
+        </div>
+      </div>
+
+      <div class="step-card">
+        <div class="card-label">Discretization</div>
+        <div class="card-visual">
+          <img src="discretization.png.jpeg" alt="Discretization">
+        </div>
+      </div>
+
+      <div class="step-card">
+        <div class="card-label">Geometric</div>
+        <div class="card-visual">
+          <img src="geometry.jpg.png" alt="Geometric">
+        </div>
+      </div>
+
+      <div class="step-card alg-card">
+        <div class="card-label">Algebraic</div>
+        <div class="card-visual">
+          <div class="alg-eq">
+            <span>Q</span>
+            <span>=</span>
+            <span class="frac">
+              <span class="num">πr⁴ΔP</span>
+              <span class="frac-bar"></span>
+              <span class="den">8ηL</span>
+            </span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- RIGHT: title + text + button -->
+  <div class="right-panel">
+
+    <div class="tube-deco">
+      <svg class="tube-svg" viewBox="0 0 180 280" xmlns="http://www.w3.org/2000/svg">
+        <ellipse cx="90" cy="30" rx="60" ry="18" fill="none" stroke="#1a6fa0" stroke-width="3"/>
+        <line x1="30" y1="30" x2="30" y2="250" stroke="#1a6fa0" stroke-width="3"/>
+        <line x1="150" y1="30" x2="150" y2="250" stroke="#1a6fa0" stroke-width="3"/>
+        <ellipse cx="90" cy="250" rx="60" ry="18" fill="rgba(135,206,235,0.4)" stroke="#1a6fa0" stroke-width="3"/>
+        <line x1="50" y1="80" x2="50" y2="200" stroke="#87ceeb" stroke-width="1.5" opacity="0.7"/>
+        <line x1="90" y1="60" x2="90" y2="220" stroke="#87ceeb" stroke-width="2.5" opacity="0.8"/>
+        <line x1="130" y1="80" x2="130" y2="200" stroke="#87ceeb" stroke-width="1.5" opacity="0.7"/>
+        <polygon points="90,48 86,64 94,64" fill="#1a6fa0" opacity="0.6"/>
+        <polygon points="50,68 46,82 54,82" fill="#1a6fa0" opacity="0.4"/>
+        <polygon points="130,68 126,82 134,82" fill="#1a6fa0" opacity="0.4"/>
+      </svg>
+    </div>
+
+    <h1 class="main-heading">
+      Poiseuille's
+      <em>Law</em>
+    </h1>
+
+    <div class="rule-line"></div>
+
+    <p class="lead-text">
+      From blood in arteries to water in pipes — one elegant formula governing viscous flow through a cylinder.
+    </p>
+
+    <a href="reality.html" class="start-btn">
+      <span>Let's Start <span class="arrow">→</span></span>
+    </a>
+
+  </div>
+
+</div>
+
+<!-- Lightbox -->
+<style>
+.lightbox{display:none;position:fixed;inset:0;z-index:999;background:rgba(10,22,40,0.88);align-items:center;justify-content:center;cursor:zoom-out;}
+.lightbox.open{display:flex;}
+.lightbox img{max-width:90vw;max-height:90vh;object-fit:contain;border-radius:10px;}
+</style>
+<div class="lightbox" id="lightbox"><img id="lightbox-img" src="" alt=""></div>
+
+<script>
+const lb = document.getElementById('lightbox');
+const lbImg = document.getElementById('lightbox-img');
+document.querySelectorAll('.card-visual img').forEach(img => {
+  img.style.cursor = 'zoom-in';
+  img.addEventListener('click', () => {
+    lbImg.src = img.src;
+    lb.classList.add('open');
+  });
+});
+lb.addEventListener('click', () => lb.classList.remove('open'));
+</script>
+<!-- Code injected by live-server -->
+<script>
+	// <![CDATA[  <-- For SVG support
+	if ('WebSocket' in window) {
+		(function () {
+			function refreshCSS() {
+				var sheets = [].slice.call(document.getElementsByTagName("link"));
+				var head = document.getElementsByTagName("head")[0];
+				for (var i = 0; i < sheets.length; ++i) {
+					var elem = sheets[i];
+					var parent = elem.parentElement || head;
+					parent.removeChild(elem);
+					var rel = elem.rel;
+					if (elem.href && typeof rel != "string" || rel.length == 0 || rel.toLowerCase() == "stylesheet") {
+						var url = elem.href.replace(/(&|\?)_cacheOverride=\d+/, '');
+						elem.href = url + (url.indexOf('?') >= 0 ? '&' : '?') + '_cacheOverride=' + (new Date().valueOf());
+					}
+					parent.appendChild(elem);
+				}
+			}
+			var protocol = window.location.protocol === 'http:' ? 'ws://' : 'wss://';
+			var address = protocol + window.location.host + window.location.pathname + '/ws';
+			var socket = new WebSocket(address);
+			socket.onmessage = function (msg) {
+				if (msg.data == 'reload') window.location.reload();
+				else if (msg.data == 'refreshcss') refreshCSS();
+			};
+			if (sessionStorage && !sessionStorage.getItem('IsThisFirstTime_Log_From_LiveServer')) {
+				console.log('Live reload enabled.');
+				sessionStorage.setItem('IsThisFirstTime_Log_From_LiveServer', true);
+			}
+		})();
+	}
+	else {
+		console.error('Upgrade your browser. This Browser is NOT supported WebSocket for Live-Reloading.');
+	}
+	// ]]>
+</script>
+</body>
+</html>
